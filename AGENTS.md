@@ -29,12 +29,31 @@ This file helps AI coding agents generate code that fits this project.
 │       ├── document-card.tsx
 │       ├── documents-view.tsx
 │       └── empty-state.tsx
+├── data/                 # Mock data, seed data, static datasets
+│   └── documents.ts      # Mock documents for development
 ├── hooks/                # Custom React hooks
 ├── lib/
 │   ├── utils.ts          # cn() utility (clsx + tailwind-merge)
 │   └── types.ts          # Shared TypeScript types
 ├── public/               # Static assets
 └── biome.json            # Linter + formatter config
+```
+
+## Data Folder
+
+Mock data, seed data, and static datasets live in `data/`.
+
+```typescript
+// data/documents.ts
+import type { DocStructDocument } from "@/lib/types"
+
+export const mockDocuments: DocStructDocument[] = [...]
+```
+
+Import in pages or components:
+
+```tsx
+import { mockDocuments } from "@/data/documents"
 ```
 
 ## Modules Convention
