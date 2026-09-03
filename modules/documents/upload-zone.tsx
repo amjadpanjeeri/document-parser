@@ -55,7 +55,7 @@ function UploadZone() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "group flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-300",
+        "group flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-300 sm:h-48",
         uploadState === "idle" &&
           "border-border bg-muted/10 p-8 hover:border-primary/40 hover:bg-muted/20 hover:scale-[1.02]",
         uploadState === "dragging" &&

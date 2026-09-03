@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button"
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16">
+    <div className="flex flex-col items-center justify-center py-10 md:py-16">
       {/* Upload Zone */}
-      <div className="flex w-full max-w-lg flex-col items-center rounded-2xl border-2 border-dashed border-border p-12 transition-colors hover:border-primary/40 hover:bg-muted/30">
+      <div className="flex w-full max-w-lg flex-col items-center rounded-2xl border-2 border-dashed border-border p-8 transition-colors hover:border-primary/40 hover:bg-muted/30 md:p-12">
         <div className="mb-6 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
           <FileUp className="size-8 text-primary" />
         </div>

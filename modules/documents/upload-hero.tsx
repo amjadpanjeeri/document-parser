@@ -6,7 +6,7 @@ import { UploadZone } from "./upload-zone"
 
 function UploadHero() {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-background to-muted/30 px-6 py-8 md:px-10 md:py-10">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-background to-muted/30 px-4 py-6 md:px-10 md:py-10">
       {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         {/* Grid pattern */}
@@ -52,9 +52,9 @@ function UploadHero() {
       </div>
 
       {/* Steps | Stats with center line */}
-      <div className="relative mb-8 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr]">
+      <div className="relative mb-6 grid grid-cols-1 gap-6 sm:mb-8 sm:grid-cols-[1fr_auto_1fr] sm:gap-0">
         {/* Left: Steps — right aligned */}
-        <div className="sm:pr-8 sm:text-right">
+        <div className="flex flex-col items-center sm:items-end sm:pr-8 sm:text-right">
           <StepsDiagram />
         </div>
 
@@ -64,7 +64,7 @@ function UploadHero() {
         </div>
 
         {/* Right: Stats — left aligned */}
-        <div className="sm:pl-8">
+        <div className="flex flex-col items-center sm:items-start sm:pl-8">
           <StatsBar />
         </div>
       </div>

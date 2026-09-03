@@ -45,7 +45,7 @@ export default function Page() {
         onTabChange={setActiveTab}
         documentCount={mockDocuments.length}
       />
-      <main className="flex-1 px-4 py-6 md:px-6 md:py-8">
+      <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl">
           <DocumentsView documents={mockDocuments} activeTab={activeTab} />
         </div>
