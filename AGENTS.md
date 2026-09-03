@@ -98,7 +98,7 @@ import { DocumentCard } from "@/components/document-card"
 
 ## Component Patterns
 
-### shadcn/ui Components
+### Reusable Primitives (components/ui/)
 
 Use the shadcn CLI to add components:
 
@@ -106,7 +106,7 @@ Use the shadcn CLI to add components:
 npx shadcn@latest add <component-name>
 ```
 
-Components go in `components/ui/`. They follow this pattern:
+Components in `components/ui/` are reusable primitives. Use `React.ComponentProps` to inherit all native HTML props:
 
 ```tsx
 import { cva, type VariantProps } from "class-variance-authority"
@@ -120,6 +120,7 @@ const componentVariants = cva("base-classes", {
   defaultVariants: { variant: "default", size: "default" },
 })
 
+// ✅ Use React.ComponentProps for reusable primitives
 function Component({
   className,
   variant,
@@ -134,6 +135,26 @@ function Component({
 export { Component, componentVariants }
 ```
 
+### Page Components (modules/)
+
+Components in `modules/` are page-specific. Use plain `type` for props — no `React.ComponentProps` needed:
+
+```tsx
+import type { DocStructDocument } from "@/lib/types"
+
+// ✅ Use type for component props
+type DocumentCardProps = {
+  document: DocStructDocument
+  viewMode: "grid" | "list"
+}
+
+function DocumentCard({ document, viewMode }: DocumentCardProps) {
+  return <div>...</div>
+}
+
+export { DocumentCard }
+```
+
 ### Server vs Client Components
 
 - Default to **Server Components** (no `"use client"`)
@@ -146,6 +167,44 @@ export { Component, componentVariants }
 - **Hooks:** `camelCase.ts` with `use` prefix (e.g., `useDebounce.ts`)
 - **Utilities:** `camelCase.ts` (e.g., `formatDate.ts`)
 - **Pages:** `page.tsx` (Next.js convention)
+
+### Size Limits
+
+Keep components small and focused. Industry standard limits:
+
+| Scope | Max Lines | Action if exceeded |
+|---|---|---|
+| Component file | 150 | Extract sub-components into separate files |
+| Single component function | 100 | Split into smaller components |
+| Helper/utility function | 50 | Extract into `lib/` or split into focused functions |
+| Hook | 50 | Extract logic into smaller hooks or utilities |
+
+> **Note:** shadcn/ui auto-generated files in `components/ui/` are exempt from size limits — do not manually edit them.
+
+**When a component gets too large:**
+
+1. Extract child components (e.g., `DocumentCard` from `DocumentsView`)
+2. Extract logic into custom hooks (e.g., `useDocuments`)
+3. Extract helpers into `lib/` (e.g., `lib/format-date.ts`)
+4. Move constants/config to separate files
+
+```tsx
+// ❌ Bad — 200+ line component doing everything
+function Dashboard() {
+  // ... 200 lines of logic + JSX
+}
+
+// ✅ Good — split into focused components
+function Dashboard() {
+  return (
+    <div>
+      <DashboardHeader />
+      <DashboardStats />
+      <DashboardTable />
+    </div>
+  )
+}
+```
 
 ## Styling
 
@@ -199,7 +258,7 @@ import type { User } from "./types"
 
 ## TypeScript Conventions
 
-- Use `interface` for object shapes, `type` for unions/intersections
+- Use `type` for component props and object shapes
 - Prefer `type` imports: `import type { ... } from "..."`
 - Avoid `any` — use `unknown` and narrow with type guards
 - Prefix unused variables/params with `_`
