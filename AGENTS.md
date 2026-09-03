@@ -17,28 +17,65 @@ This file helps AI coding agents generate code that fits this project.
 ```
 ├── app/                  # Next.js App Router pages and layouts
 │   ├── layout.tsx        # Root layout (fonts, ThemeProvider)
-│   ├── page.tsx          # Home page
+│   ├── page.tsx          # Home page (documents library)
 │   └── globals.css       # Tailwind CSS + theme variables
 ├── components/
 │   ├── ui/               # shadcn/ui components (reusable primitives)
 │   └── theme-provider.tsx # next-themes wrapper
+├── modules/              # Page-specific components (one folder per page)
+│   └── documents/        # Documents Library page components
+│       ├── navbar.tsx
+│       ├── page-header.tsx
+│       ├── document-card.tsx
+│       ├── documents-view.tsx
+│       └── empty-state.tsx
 ├── hooks/                # Custom React hooks
 ├── lib/
-│   └── utils.ts          # cn() utility (clsx + tailwind-merge)
+│   ├── utils.ts          # cn() utility (clsx + tailwind-merge)
+│   └── types.ts          # Shared TypeScript types
 ├── public/               # Static assets
 └── biome.json            # Linter + formatter config
+```
+
+## Modules Convention
+
+Page-specific components live in `modules/<page-name>/`, not in `components/`.
+
+- **`components/ui/`** — Shared, reusable primitives (shadcn/ui)
+- **`components/`** — Shared layout components (theme-provider)
+- **`modules/<page>/`** — All non-shadcn components for a specific page
+
+When adding a new page:
+1. Create `modules/<page-name>/` folder
+2. Add all page-specific components inside it
+3. Import them in `app/<page>/page.tsx` using `@/modules/<page>/...`
+
+Within the same module, use **relative imports** (`./component`).
+Across modules or from app/, use **`@/` imports** (`@/modules/<page>/component`).
+
+```tsx
+// ✅ Good — relative import within the same module
+import { DocumentCard } from "./document-card"
+
+// ✅ Good — cross-module or from app/
+import { DocumentsView } from "@/modules/documents/documents-view"
+
+// ❌ Bad — don't put page components in components/
+import { DocumentCard } from "@/components/document-card"
 ```
 
 ## Path Aliases
 
 ```typescript
-@/components   // → components/
-@/lib          // → lib/
-@/hooks        // → hooks/
+@/components    // → components/
 @/components/ui // → components/ui/
+@/modules       // → modules/
+@/lib           // → lib/
+@/hooks         // → hooks/
 ```
 
-Always use `@/` imports, never relative paths for project code.
+- Use **`@/` imports** for cross-module references
+- Use **relative imports** (`./`, `../`) within the same module folder
 
 ## Component Patterns
 
