@@ -222,7 +222,7 @@ function DocumentViewer({
         <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden md:flex-row">
           {/* Left: File Preview */}
           <div className="flex min-h-0 flex-col border-b border-border bg-muted/30 md:w-1/2 md:border-b-0 md:border-r md:flex-none">
-            <div className="flex items-center justify-between border-b border-border px-4 py-2">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                 Document Preview
               </span>
