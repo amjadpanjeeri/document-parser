@@ -6,12 +6,14 @@ type UploadStatus = "idle" | "dragging" | "uploading" | "done"
 
 type DocumentStore = {
   uploadStatus: UploadStatus
+  statusMessage: string
   uploadedFile: File | null
   filePreviewUrl: string | null
   viewerOpen: boolean
   extractedSections: ExtractedSection[]
 
   setUploading: (file: File) => void
+  setStatusMessage: (message: string) => void
   setDragging: (dragging: boolean) => void
   completeUpload: (sections: ExtractedSection[]) => void
   resetUpload: () => void
@@ -21,6 +23,7 @@ type DocumentStore = {
 
 const useDocumentStore = create<DocumentStore>((set) => ({
   uploadStatus: "idle",
+  statusMessage: "",
   uploadedFile: null,
   filePreviewUrl: null,
   viewerOpen: false,
@@ -28,7 +31,16 @@ const useDocumentStore = create<DocumentStore>((set) => ({
 
   setUploading: (file: File) => {
     const url = URL.createObjectURL(file)
-    set({ uploadStatus: "uploading", uploadedFile: file, filePreviewUrl: url })
+    set({
+      uploadStatus: "uploading",
+      statusMessage: "Uploading file...",
+      uploadedFile: file,
+      filePreviewUrl: url,
+    })
+  },
+
+  setStatusMessage: (message: string) => {
+    set({ statusMessage: message })
   },
 
   setDragging: (dragging: boolean) => {
@@ -44,6 +56,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       if (state.filePreviewUrl) URL.revokeObjectURL(state.filePreviewUrl)
       return {
         uploadStatus: "idle",
+        statusMessage: "",
         uploadedFile: null,
         filePreviewUrl: null,
         extractedSections: [],

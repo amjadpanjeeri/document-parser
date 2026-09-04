@@ -1,169 +1,69 @@
 "use client"
 
-import { ArrowRight, CheckCircle2, FileText, FileUp } from "lucide-react"
-import { useCallback } from "react"
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  FileText,
+  FileUp,
+} from "lucide-react"
+import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
 
 import { Button } from "@/components/ui/button"
+import { useExtract } from "@/hooks/use-extract"
 import { cn } from "@/lib/utils"
 import { useDocumentStore } from "@/stores/document-store"
-
-const mockExtractedSections = [
-  {
-    title: "Vendor Information",
-    fields: [
-      {
-        key: "vendor_name",
-        label: "Vendor Name",
-        value: "Acme Corp",
-        confidence: 98,
-        isAiCompleted: true,
-      },
-      {
-        key: "vendor_address",
-        label: "Address",
-        value: "123 Business St, San Francisco, CA 94105",
-        confidence: 95,
-        isAiCompleted: true,
-      },
-      {
-        key: "vendor_email",
-        label: "Email",
-        value: "billing@acme.com",
-        confidence: 99,
-        isAiCompleted: true,
-      },
-    ],
-  },
-  {
-    title: "Invoice Details",
-    fields: [
-      {
-        key: "invoice_number",
-        label: "Invoice Number",
-        value: "INV-2024-0847",
-        confidence: 100,
-        isAiCompleted: false,
-      },
-      {
-        key: "invoice_date",
-        label: "Invoice Date",
-        value: "2024-09-15",
-        confidence: 97,
-        isAiCompleted: true,
-      },
-      {
-        key: "due_date",
-        label: "Due Date",
-        value: "2024-10-15",
-        confidence: 92,
-        isAiCompleted: true,
-      },
-      {
-        key: "currency",
-        label: "Currency",
-        value: "USD",
-        confidence: 100,
-        isAiCompleted: false,
-      },
-    ],
-  },
-  {
-    title: "Line Items",
-    fields: [
-      {
-        key: "item_1_desc",
-        label: "Item 1 — Description",
-        value: "Web Development Services",
-        confidence: 96,
-        isAiCompleted: true,
-      },
-      {
-        key: "item_1_qty",
-        label: "Item 1 — Quantity",
-        value: "1",
-        confidence: 100,
-        isAiCompleted: false,
-      },
-      {
-        key: "item_1_price",
-        label: "Item 1 — Unit Price",
-        value: "$5,000.00",
-        confidence: 99,
-        isAiCompleted: true,
-      },
-      {
-        key: "item_2_desc",
-        label: "Item 2 — Description",
-        value: "UI/UX Design",
-        confidence: 94,
-        isAiCompleted: true,
-      },
-      {
-        key: "item_2_qty",
-        label: "Item 2 — Quantity",
-        value: "1",
-        confidence: 100,
-        isAiCompleted: false,
-      },
-      {
-        key: "item_2_price",
-        label: "Item 2 — Unit Price",
-        value: "$2,500.00",
-        confidence: 98,
-        isAiCompleted: true,
-      },
-    ],
-  },
-  {
-    title: "Totals",
-    fields: [
-      {
-        key: "subtotal",
-        label: "Subtotal",
-        value: "$7,500.00",
-        confidence: 100,
-        isAiCompleted: false,
-      },
-      {
-        key: "tax",
-        label: "Tax",
-        value: "$675.00",
-        confidence: 88,
-        isAiCompleted: true,
-      },
-      {
-        key: "total",
-        label: "Total",
-        value: "$8,175.00",
-        confidence: 91,
-        isAiCompleted: true,
-      },
-    ],
-  },
-]
 
 function UploadZone() {
   const {
     uploadStatus,
+    statusMessage,
     setUploading,
+    setStatusMessage,
     setDragging,
+    resetUpload,
     completeUpload,
     openViewer,
   } = useDocumentStore()
+  const { extract } = useExtract()
+  const [extractError, setExtractError] = useState<string | null>(null)
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0]
       if (!file) return
+      setExtractError(null)
       setUploading(file)
 
-      setTimeout(() => {
-        completeUpload(mockExtractedSections)
+      try {
+        setStatusMessage("Sending to server...")
+        // Small delay so the user sees the phase change
+        await new Promise((r) => setTimeout(r, 300))
+
+        setStatusMessage("Extracting with AI...")
+        const sections = await extract(file)
+
+        setStatusMessage("Preparing results...")
+        await new Promise((r) => setTimeout(r, 200))
+
+        completeUpload(sections)
         openViewer()
-      }, 2000)
+      } catch (err) {
+        console.error("[UploadZone] Extraction failed:", err)
+        const message = err instanceof Error ? err.message : "Extraction failed"
+        setExtractError(message)
+        resetUpload()
+      }
     },
-    [setUploading, completeUpload, openViewer]
+    [
+      setUploading,
+      setStatusMessage,
+      extract,
+      completeUpload,
+      openViewer,
+      resetUpload,
+    ]
   )
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -220,22 +120,36 @@ function UploadZone() {
         )}
       </div>
 
-      {/* Idle */}
-      {uploadStatus === "idle" && (
-        <>
-          <p className="mb-1 font-medium text-sm">
-            Drop your first document here
-          </p>
-          <p className="mb-5 text-center text-muted-foreground text-xs">
-            or click to browse · PDF, PNG, JPG up to 10MB
-          </p>
-          <Button size="lg" className="gap-2" tabIndex={-1}>
-            <FileText className="size-4" />
-            Choose File
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Button>
-        </>
-      )}
+      {/* Idle / Error */}
+      {uploadStatus === "idle" &&
+        (extractError ? (
+          <div className="flex flex-col items-center gap-2">
+            <AlertCircle className="size-6 text-destructive" />
+            <p className="font-medium text-destructive text-sm">
+              Extraction failed
+            </p>
+            <p className="max-w-xs text-center text-muted-foreground text-xs">
+              {extractError}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Drop another file to try again
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="mb-1 font-medium text-sm">
+              Drop your first document here
+            </p>
+            <p className="mb-5 text-center text-muted-foreground text-xs">
+              or click to browse · PDF, PNG, JPG up to 10MB
+            </p>
+            <Button size="lg" className="gap-2" tabIndex={-1}>
+              <FileText className="size-4" />
+              Choose File
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Button>
+          </>
+        ))}
 
       {/* Dragging */}
       {uploadStatus === "dragging" && (
@@ -249,10 +163,12 @@ function UploadZone() {
         </>
       )}
 
-      {/* Uploading */}
+      {/* Uploading / Extracting */}
       {uploadStatus === "uploading" && (
         <>
-          <p className="mb-1 font-medium text-sm">Uploading...</p>
+          <p className="mb-1 font-medium text-sm">
+            {statusMessage || "Uploading..."}
+          </p>
           <p className="text-muted-foreground text-xs">
             {useDocumentStore.getState().uploadedFile?.name}
           </p>
