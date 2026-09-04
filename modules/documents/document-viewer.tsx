@@ -30,9 +30,11 @@ function DocumentViewer({
   fileName: fileNameProp,
   sections: sectionsProp,
 }: DocumentViewerProps) {
-  const { uploadedFile, extractedSections, closeViewer } = useDocumentStore()
+  const { uploadedFile, filePreviewUrl, extractedSections, closeViewer } =
+    useDocumentStore()
 
   const fileName = fileNameProp ?? uploadedFile?.name ?? "document.pdf"
+  const fileType = uploadedFile?.type ?? "application/pdf"
   const sections =
     sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
 
@@ -61,7 +63,11 @@ function DocumentViewer({
         </SheetHeader>
 
         <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden md:flex-row">
-          <DocumentPreview />
+          <DocumentPreview
+            fileName={fileName}
+            fileType={fileType}
+            filePreviewUrl={filePreviewUrl}
+          />
           <ExtractedFields sections={sections} />
         </div>
 

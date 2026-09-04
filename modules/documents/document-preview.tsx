@@ -8,19 +8,26 @@ import {
   RotateCw,
   Upload,
 } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { useDocumentStore } from "@/stores/document-store"
 
-function DocumentPreview() {
-  const { uploadedFile, filePreviewUrl } = useDocumentStore()
+type DocumentPreviewProps = {
+  fileName: string
+  fileType: string
+  filePreviewUrl: string | null
+}
+
+function DocumentPreview({
+  fileName,
+  fileType,
+  filePreviewUrl,
+}: DocumentPreviewProps) {
   const [rotation, setRotation] = useState(0)
   const [zoom, setZoom] = useState(1)
 
-  const fileName = uploadedFile?.name ?? "document.pdf"
-  const fileType = uploadedFile?.type ?? "application/pdf"
   const isImage = fileType.startsWith("image/")
+  const isPdf = fileType === "application/pdf"
 
   const handleRotate = useCallback(() => {
     setRotation((r) => (r + 90) % 360)
@@ -38,33 +45,6 @@ function DocumentPreview() {
     setRotation(0)
     setZoom(1)
   }, [])
-
-  const filePreview = useMemo(() => {
-    if (!filePreviewUrl) return null
-    if (isImage) {
-      return (
-        // biome-ignore lint/performance/noImgElement: blob URLs can't use next/image
-        <img
-          src={filePreviewUrl}
-          alt={fileName}
-          className="max-h-full max-w-full rounded-lg border border-border object-contain"
-        />
-      )
-    }
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10">
-          <FileText className="size-10 text-primary/60" />
-        </div>
-        <div className="text-center">
-          <p className="font-medium text-sm">{fileName}</p>
-          <p className="mt-1 text-muted-foreground text-xs">
-            {fileType.toUpperCase()} document
-          </p>
-        </div>
-      </div>
-    )
-  }, [filePreviewUrl, isImage, fileName, fileType])
 
   return (
     <div className="flex min-h-0 flex-col border-b border-border bg-muted/30 md:w-1/2 md:border-b-0 md:border-r md:flex-none">
@@ -123,7 +103,34 @@ function DocumentPreview() {
             transform: `rotate(${rotation}deg) scale(${zoom})`,
           }}
         >
-          {filePreview ?? (
+          {filePreviewUrl ? (
+            isImage ? (
+              // biome-ignore lint/performance/noImgElement: blob URLs can't use next/image
+              <img
+                src={filePreviewUrl}
+                alt={fileName}
+                className="max-h-full max-w-full rounded-lg border border-border object-contain"
+              />
+            ) : isPdf ? (
+              <iframe
+                src={filePreviewUrl}
+                title={fileName}
+                className="h-full min-h-[400px] w-full rounded-lg border border-border bg-background"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10">
+                  <FileText className="size-10 text-primary/60" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-sm">{fileName}</p>
+                  <p className="mt-1 text-muted-foreground text-xs">
+                    Preview not available for {fileType.toUpperCase()}
+                  </p>
+                </div>
+              </div>
+            )
+          ) : (
             <div className="flex flex-col items-center gap-3">
               <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10">
                 <FileText className="size-10 text-primary/60" />
