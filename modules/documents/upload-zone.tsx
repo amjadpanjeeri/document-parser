@@ -84,11 +84,13 @@ function UploadZone() {
       className={cn(
         "group flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-300 sm:h-48",
         uploadStatus === "idle" &&
-          "border-border bg-muted/10 p-8 hover:border-primary/40 hover:bg-muted/20 hover:scale-[1.02]",
+          "border-border bg-muted/10 p-5 hover:border-primary/40 hover:bg-muted/20 hover:scale-[1.02] sm:p-8",
         uploadStatus === "dragging" &&
-          "border-primary bg-primary/5 p-8 scale-[1.02] shadow-lg shadow-primary/10",
-        uploadStatus === "uploading" && "border-primary/50 bg-primary/5 p-8",
-        uploadStatus === "done" && "border-green-500/50 bg-green-500/5 p-8"
+          "border-primary bg-primary/5 p-5 scale-[1.02] shadow-lg shadow-primary/10 sm:p-8",
+        uploadStatus === "uploading" &&
+          "border-primary/50 bg-primary/5 p-5 sm:p-8",
+        uploadStatus === "done" &&
+          "border-green-500/50 bg-green-500/5 p-5 sm:p-8"
       )}
     >
       <input {...getInputProps()} />
@@ -96,7 +98,7 @@ function UploadZone() {
       {/* Icon */}
       <div
         className={cn(
-          "mb-5 flex size-14 items-center justify-center rounded-2xl transition-all duration-300",
+          "mb-4 flex size-12 items-center justify-center rounded-2xl transition-all duration-300 sm:mb-5 sm:size-14",
           uploadStatus === "idle" &&
             "bg-primary/10 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20",
           uploadStatus === "dragging" && "bg-primary/20 scale-110",
@@ -124,7 +126,8 @@ function UploadZone() {
       {uploadStatus === "idle" &&
         (extractError ? (
           <div className="flex flex-col items-center gap-2">
-            <AlertCircle className="size-6 text-destructive" />
+            {" "}
+            <AlertCircle className="size-5 text-destructive sm:size-6" />
             <p className="font-medium text-destructive text-sm">
               Extraction failed
             </p>

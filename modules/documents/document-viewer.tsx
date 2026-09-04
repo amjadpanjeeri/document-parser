@@ -50,13 +50,13 @@ function DocumentViewer({
         side="right"
         className="flex h-full w-full flex-col gap-0 overflow-hidden p-0"
       >
-        <SheetHeader className="border-b border-border px-6 py-4">
+        <SheetHeader className="border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
               <FileText className="size-5 text-primary" />
             </div>
-            <div>
-              <SheetTitle>{fileName}</SheetTitle>
+            <div className="min-w-0">
+              <SheetTitle className="truncate">{fileName}</SheetTitle>
               <SheetDescription>Parsed document data</SheetDescription>
             </div>
           </div>
@@ -71,7 +71,7 @@ function DocumentViewer({
           <ExtractedFields sections={sections} />
         </div>
 
-        <SheetFooter className="border-t border-border px-6 py-4">
+        <SheetFooter className="border-t border-border px-4 py-3 sm:px-6 sm:py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>

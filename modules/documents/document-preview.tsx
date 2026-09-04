@@ -48,8 +48,8 @@ function DocumentPreview({
 
   return (
     <div className="flex min-h-0 flex-col border-b border-border bg-muted/30 md:w-1/2 md:border-b-0 md:border-r md:flex-none">
-      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <span className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-4 sm:py-2.5">
+        <span className="hidden text-muted-foreground text-xs font-medium uppercase tracking-wider sm:inline">
           Document Preview
         </span>
         <div className="flex items-center gap-0.5">
@@ -87,6 +87,7 @@ function DocumentPreview({
             size="icon-sm"
             onClick={handleResetView}
             title="Reset view"
+            className="hidden sm:flex"
           >
             <RefreshCw className="size-3.5" />
           </Button>
@@ -96,7 +97,7 @@ function DocumentPreview({
           </Button>
         </div>
       </div>
-      <div className="flex flex-1 items-center justify-center overflow-auto p-6">
+      <div className="flex flex-1 items-center justify-center overflow-auto p-3 sm:p-6">
         <div
           className="flex items-center justify-center transition-transform duration-200"
           style={{
