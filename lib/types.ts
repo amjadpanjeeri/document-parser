@@ -18,3 +18,17 @@ export interface DocStructDocument {
   confidence?: number
   thumbnailUrl?: string
 }
+
+export type ExtractedField = {
+  key: string
+  label: string
+  value: string
+  confidence: number
+  isAiCompleted: boolean
+  isEditable?: boolean
+}
+
+export type ExtractedSection = {
+  title: string
+  fields: ExtractedField[]
+}

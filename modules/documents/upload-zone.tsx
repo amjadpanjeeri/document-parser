@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils"
 
 type UploadState = "idle" | "dragging" | "uploading" | "done"
 
-function UploadZone() {
+type UploadZoneProps = {
+  onUploadComplete?: (fileName: string, fileType: string) => void
+}
+
+function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const [uploadState, setUploadState] = useState<UploadState>("idle")
   const [fileName, setFileName] = useState("")
 
@@ -22,30 +26,39 @@ function UploadZone() {
     setUploadState("idle")
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      setFileName(file.name)
-      setUploadState("uploading")
-      setTimeout(() => setUploadState("done"), 2000)
-      setTimeout(() => {
-        setUploadState("idle")
-        setFileName("")
-      }, 4000)
-    }
-  }, [])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const file = e.dataTransfer.files[0]
+      if (file) {
+        setFileName(file.name)
+        setUploadState("uploading")
+        setTimeout(() => {
+          setUploadState("done")
+          onUploadComplete?.(file.name, file.type)
+        }, 2000)
+        setTimeout(() => {
+          setUploadState("idle")
+          setFileName("")
+        }, 4000)
+      }
+    },
+    [onUploadComplete]
+  )
 
   const handleClick = useCallback(() => {
     if (uploadState !== "idle") return
     setFileName("invoice-sample.pdf")
     setUploadState("uploading")
-    setTimeout(() => setUploadState("done"), 2000)
+    setTimeout(() => {
+      setUploadState("done")
+      onUploadComplete?.("invoice-sample.pdf", "application/pdf")
+    }, 2000)
     setTimeout(() => {
       setUploadState("idle")
       setFileName("")
     }, 4000)
-  }, [uploadState])
+  }, [uploadState, onUploadComplete])
 
   return (
     <button
