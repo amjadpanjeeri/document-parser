@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-import type { ExtractedSection } from "./types"
+import type { ExtractedSection } from "@/lib/types"
 
 type UploadStatus = "idle" | "dragging" | "uploading" | "done"
 
