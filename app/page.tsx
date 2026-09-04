@@ -18,7 +18,7 @@ export default function Page() {
       <div className="pointer-events-none fixed inset-0 -z-10">
         {/* Grid pattern */}
         <div
-          className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
           style={{
             backgroundImage:
               "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
@@ -27,9 +27,9 @@ export default function Page() {
         />
 
         {/* Gradient orbs */}
-        <div className="absolute -top-48 -left-48 size-[600px] rounded-full bg-primary/[0.03] blur-[120px]" />
-        <div className="absolute top-1/3 -right-32 size-[500px] rounded-full bg-violet-500/[0.03] blur-[100px]" />
-        <div className="absolute -bottom-48 left-1/3 size-[400px] rounded-full bg-emerald-500/[0.03] blur-[100px]" />
+        <div className="absolute -top-48 -left-48 size-[600px] rounded-full bg-primary/[0.06] blur-[120px]" />
+        <div className="absolute top-1/3 -right-32 size-[500px] rounded-full bg-violet-500/[0.06] blur-[100px]" />
+        <div className="absolute -bottom-48 left-1/3 size-[400px] rounded-full bg-emerald-500/[0.06] blur-[100px]" />
 
         {/* Floating dots */}
         <div className="absolute top-20 left-[15%] size-1 rounded-full bg-primary/20" />
