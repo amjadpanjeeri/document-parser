@@ -11,18 +11,16 @@ import { UploadHero } from "./upload-hero"
 type DocumentsViewProps = {
   documents?: DocStructDocument[]
   activeTab?: "upload" | "documents"
-  onUploadComplete?: (fileName: string, fileType: string) => void
 }
 
 function DocumentsView({
   documents = [],
   activeTab = "upload",
-  onUploadComplete,
 }: DocumentsViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   if (activeTab === "upload") {
-    return <UploadHero onUploadComplete={onUploadComplete} />
+    return <UploadHero />
   }
 
   if (documents.length === 0) {

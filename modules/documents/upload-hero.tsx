@@ -4,11 +4,7 @@ import { StatsBar } from "./stats-bar"
 import { StepsDiagram } from "./steps-diagram"
 import { UploadZone } from "./upload-zone"
 
-type UploadHeroProps = {
-  onUploadComplete?: (fileName: string, fileType: string) => void
-}
-
-function UploadHero({ onUploadComplete }: UploadHeroProps) {
+function UploadHero() {
   return (
     <div className="overflow-hidden rounded-2xl bg-gradient-to-b from-background to-muted/30 px-4 py-6 md:px-10 md:py-10">
       {/* Headline centered */}
@@ -50,7 +46,7 @@ function UploadHero({ onUploadComplete }: UploadHeroProps) {
       </div>
 
       {/* Upload full width */}
-      <UploadZone onUploadComplete={onUploadComplete} />
+      <UploadZone />
     </div>
   )
 }

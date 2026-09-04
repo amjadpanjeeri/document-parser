@@ -16,7 +16,7 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react"
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,13 +35,14 @@ import {
 } from "@/components/ui/tooltip"
 import type { ExtractedField, ExtractedSection } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useDocumentStore } from "@/stores/document-store"
 
 type DocumentViewerProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  fileName: string
-  fileType: string
-  sections: ExtractedSection[]
+  fileName?: string
+  fileType?: string
+  sections?: ExtractedSection[]
 }
 
 function ConfidenceBar({ value }: { value: number }) {
@@ -128,10 +129,17 @@ function FieldRow({
 function DocumentViewer({
   open,
   onOpenChange,
-  fileName,
-  fileType,
-  sections,
+  fileName: fileNameProp,
+  fileType: fileTypeProp,
+  sections: sectionsProp,
 }: DocumentViewerProps) {
+  const { uploadedFile, filePreviewUrl, extractedSections, closeViewer } =
+    useDocumentStore()
+
+  const fileName = fileNameProp ?? uploadedFile?.name ?? "document.pdf"
+  const fileType = fileTypeProp ?? uploadedFile?.type ?? "application/pdf"
+  const sections =
+    sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
   const [copied, setCopied] = useState(false)
   const [rightView, setRightView] = useState<"fields" | "json">("fields")
   const [isEditMode, setIsEditMode] = useState(false)
@@ -199,8 +207,41 @@ function DocumentViewer({
 
   const isImage = fileType.startsWith("image/")
 
+  const filePreview = useMemo(() => {
+    if (!filePreviewUrl) return null
+    if (isImage) {
+      return (
+        // biome-ignore lint/performance/noImgElement: blob URLs can't use next/image
+        <img
+          src={filePreviewUrl}
+          alt={fileName}
+          className="max-h-full max-w-full rounded-lg border border-border object-contain"
+        />
+      )
+    }
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10">
+          <FileText className="size-10 text-primary/60" />
+        </div>
+        <div className="text-center">
+          <p className="font-medium text-sm">{fileName}</p>
+          <p className="mt-1 text-muted-foreground text-xs">
+            {fileType.toUpperCase()} document
+          </p>
+        </div>
+      </div>
+    )
+  }, [filePreviewUrl, isImage, fileName, fileType])
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v)
+        if (!v) closeViewer()
+      }}
+    >
       <SheetContent
         side="right"
         className="flex h-full w-full flex-col gap-0 overflow-hidden p-0"
@@ -277,11 +318,7 @@ function DocumentViewer({
                   transform: `rotate(${rotation}deg) scale(${zoom})`,
                 }}
               >
-                {isImage ? (
-                  <div className="flex size-full items-center justify-center rounded-lg border border-border bg-background">
-                    <FileText className="size-16 text-muted-foreground/30" />
-                  </div>
-                ) : (
+                {filePreview ?? (
                   <div className="flex flex-col items-center gap-3">
                     <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10">
                       <FileText className="size-10 text-primary/60" />
