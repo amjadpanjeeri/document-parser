@@ -16,7 +16,7 @@ const ALLOWED_TYPES = [
  * POST /api/extract
  *
  * Accepts a FormData with a "file" field containing a PDF, PNG, or JPG/JPEG.
- * Extracts structured data using Gemini and returns it as JSON.
+ * Extracts structured data using a single Gemini call and returns it as JSON.
  *
  * Response format:
  * { success: true, data: ExtractedDocument }
@@ -57,7 +57,17 @@ export async function POST(request: Request) {
       )
     }
 
+    console.log("[Extract API] Processing:", file.name, file.type, file.size)
+
     const extractedData = await extractDocumentData(file)
+
+    console.log(
+      "[Extract API] Done.",
+      "Type:",
+      extractedData.documentType,
+      "Fields:",
+      Object.keys(extractedData.fields).length
+    )
 
     return NextResponse.json({
       success: true,

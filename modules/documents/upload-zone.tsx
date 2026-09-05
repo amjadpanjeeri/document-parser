@@ -7,7 +7,7 @@ import {
   FileText,
   FileUp,
 } from "lucide-react"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useDropzone } from "react-dropzone"
 
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,27 @@ function UploadZone() {
   } = useDocumentStore()
   const { extract } = useExtract()
   const [extractError, setExtractError] = useState<string | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Live ticking timer during extraction
+  useEffect(() => {
+    if (uploadStatus === "uploading") {
+      setElapsed(0)
+      const start = Date.now()
+      timerRef.current = setInterval(() => {
+        setElapsed(
+          ((Date.now() - start) / 1000).toFixed(1) as unknown as number
+        )
+      }, 100)
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [uploadStatus])
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -36,18 +57,13 @@ function UploadZone() {
       setExtractError(null)
       setUploading(file)
 
+      const startTime = Date.now()
       try {
-        setStatusMessage("Sending to server...")
-        // Small delay so the user sees the phase change
-        await new Promise((r) => setTimeout(r, 300))
-
         setStatusMessage("Extracting with AI...")
         const sections = await extract(file)
+        const duration = Date.now() - startTime
 
-        setStatusMessage("Preparing results...")
-        await new Promise((r) => setTimeout(r, 200))
-
-        completeUpload(sections)
+        completeUpload(sections, duration)
         openViewer()
       } catch (err) {
         console.error("[UploadZone] Extraction failed:", err)

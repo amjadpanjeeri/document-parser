@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 
 type FieldsStatsBarProps = {
   aiCount: number
+  aiFilledCount: number
   totalCount: number
   avgConfidence: number
   rightView: "fields" | "json"
@@ -24,6 +25,7 @@ type FieldsStatsBarProps = {
 
 function FieldsStatsBar({
   aiCount,
+  aiFilledCount,
   totalCount,
   avgConfidence,
   rightView,
@@ -49,6 +51,27 @@ function FieldsStatsBar({
           </TooltipContent>
         </Tooltip>
       </div>
+      {aiFilledCount > 0 && (
+        <>
+          <div className="h-3 w-px bg-border" />
+          <div className="flex items-center gap-1.5 text-xs">
+            <Bot className="size-3.5 text-amber-500" />
+            <span className="font-medium text-amber-600 dark:text-amber-400">
+              {aiFilledCount}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help border-b border-dashed border-muted-foreground/50 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+                  AI Filled
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                Missing fields inferred by AI based on document context
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </>
+      )}
       <div className="h-3 w-px bg-border" />
       <div className="flex items-center gap-1.5 text-xs">
         <span className="font-medium">{totalCount}</span>

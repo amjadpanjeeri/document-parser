@@ -29,9 +29,7 @@ async function fileToBase64(file: File): Promise<string> {
  */
 function stripCodeBlocks(text: string): string {
   let cleaned = text.trim()
-  // Remove opening code block: ```json or ```
   cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, "")
-  // Remove closing code block
   cleaned = cleaned.replace(/\n?```\s*$/i, "")
   return cleaned.trim()
 }
@@ -51,43 +49,20 @@ function validateFileType(file: File): void {
   }
 }
 
-const EXTRACTION_PROMPT = `You are a document data extraction expert. Analyze this document and extract all important fields.
+const EXTRACTION_PROMPT = `Extract and complete all fields from this document. Return JSON only.
 
-Instructions:
-1. Identify the document type (Invoice, Contract, Receipt, Resume, Report, ID Document, or Other)
-2. Extract ALL visible fields — names, dates, amounts, addresses, IDs, line items, etc.
-3. Organize fields into logical sections (e.g. "Vendor Information", "Invoice Details", "Line Items", "Totals")
-4. For each field, provide a machine-readable key, a human-readable label, the extracted value, and a confidence score (0 to 1)
-5. Use null for fields that are missing or not applicable
-6. Also return a flat "fields" map with all key-value pairs for convenience
-7. Include an overall confidence score for the extraction
-8. Optionally include a brief summary of the document
+Rules:
+- Every field MUST have a non-null string value. Infer from context if not directly visible.
+- confidence 0.9-1.0 = clearly visible text. confidence <0.9 = inferred/computed from context.
+- Organize into sections. Include flat fields map.
 
-Return ONLY valid JSON matching this exact structure — no markdown, no explanation:
-{
-  "documentType": "string",
-  "confidence": 0.0-1.0,
-  "sections": [
-    {
-      "title": "Section Title",
-      "fields": [
-        {
-          "key": "machine_key",
-          "label": "Human Label",
-          "value": "extracted value or null",
-          "confidence": 0.0-1.0
-        }
-      ]
-    }
-  ],
-  "fields": {
-    "key": "value or null"
-  },
-  "summary": "optional brief summary"
-}`
+JSON structure:
+{"documentType":"...","confidence":0.0-1.0,"sections":[{"title":"...","fields":[{"key":"snake_case","label":"Human Label","value":"string","confidence":0.0-1.0}]}],"fields":{"key":"value"},"summary":"optional"}`
 
 /**
- * Extracts structured data from a document file using Gemini.
+ * Extracts structured data from a document file using a single Gemini call.
+ * The prompt instructs Gemini to extract ALL fields with values — no nulls,
+ * no separate fill pass needed.
  *
  * @param file - The document file to extract data from (PDF, PNG, JPG, JPEG)
  * @returns Parsed and validated extraction result
@@ -116,10 +91,8 @@ export async function extractDocumentData(
     throw new Error("Empty response from Gemini")
   }
 
-  // Clean the response — remove any markdown code block wrappers
   const cleanedJson = stripCodeBlocks(responseText)
 
-  // Parse JSON
   let parsed: unknown
   try {
     parsed = JSON.parse(cleanedJson)
@@ -129,7 +102,6 @@ export async function extractDocumentData(
     )
   }
 
-  // Validate against our schema
   const validationResult = ExtractedDocumentSchema.safeParse(parsed)
   if (!validationResult.success) {
     const issues = validationResult.error.issues
@@ -137,6 +109,14 @@ export async function extractDocumentData(
       .join("; ")
     throw new Error(`Extraction schema validation failed: ${issues}`)
   }
+
+  console.log(
+    "[Extract] Single-pass extraction done.",
+    "Document type:",
+    validationResult.data.documentType,
+    "Fields:",
+    Object.keys(validationResult.data.fields).length
+  )
 
   return validationResult.data
 }

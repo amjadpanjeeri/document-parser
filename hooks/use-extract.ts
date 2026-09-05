@@ -68,15 +68,20 @@ function useExtract(): UseExtractReturn {
                 label: string
                 value: string | null
                 confidence: number
-              }) => ({
-                key: field.key,
-                label: field.label,
-                value: field.value ?? "",
-                // Convert 0-1 confidence to 0-100 for display
-                confidence: Math.round(field.confidence * 100),
-                // Mark high-confidence fields as AI-completed
-                isAiCompleted: field.confidence >= 0.9,
-              })
+              }) => {
+                const isInferred = field.confidence < 0.9
+                return {
+                  key: field.key,
+                  label: field.label,
+                  // If value is null/empty, show a placeholder
+                  value: field.value || "-",
+                  // Convert 0-1 confidence to 0-100 for display
+                  confidence: Math.round(field.confidence * 100),
+                  // Only mark as AI-completed when AI had to infer the value
+                  isAiCompleted: isInferred,
+                  isAiFilled: isInferred,
+                }
+              }
             ),
           })
         )

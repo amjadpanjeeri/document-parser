@@ -25,6 +25,7 @@ export type ExtractedField = {
   value: string
   confidence: number
   isAiCompleted: boolean
+  isAiFilled?: boolean
   isEditable?: boolean
 }
 

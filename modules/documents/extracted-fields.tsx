@@ -20,7 +20,12 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
 
   const totalCount = sections.reduce((acc, s) => acc + s.fields.length, 0)
   const aiCount = sections.reduce(
-    (acc, s) => acc + s.fields.filter((f) => f.isAiCompleted).length,
+    (acc, s) =>
+      acc + s.fields.filter((f) => f.isAiCompleted && !f.isAiFilled).length,
+    0
+  )
+  const aiFilledCount = sections.reduce(
+    (acc, s) => acc + s.fields.filter((f) => f.isAiFilled).length,
     0
   )
   const avgConfidence = Math.round(
@@ -58,6 +63,7 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
     <div className="flex min-h-0 flex-1 flex-col md:w-1/2 md:flex-none">
       <FieldsStatsBar
         aiCount={aiCount}
+        aiFilledCount={aiFilledCount}
         totalCount={totalCount}
         avgConfidence={avgConfidence}
         rightView={rightView}

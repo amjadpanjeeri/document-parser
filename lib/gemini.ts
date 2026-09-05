@@ -12,8 +12,14 @@ const genAI = new GoogleGenerativeAI(apiKey)
 
 /**
  * The Gemini Flash model used for document extraction.
- * Using gemini-2.0-flash for fast, cost-effective extraction.
+ * gemini-2.5-flash: fast, cost-effective extraction with good quality.
  */
-const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" })
+const model = genAI.getGenerativeModel({
+  model: "gemini-3.6-flash",
+  generationConfig: {
+    temperature: 0.1,
+    maxOutputTokens: 8192,
+  },
+})
 
 export { genAI, model }

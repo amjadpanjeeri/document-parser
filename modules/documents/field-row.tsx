@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react"
+import { Bot, Sparkles } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import type { ExtractedField } from "@/lib/types"
@@ -30,7 +30,16 @@ function FieldRow({
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-2">
           <span className="text-muted-foreground text-xs">{field.label}</span>
-          {field.isAiCompleted && (
+          {field.isAiFilled && (
+            <Badge
+              variant="secondary"
+              className="gap-1 border-amber-500/20 bg-amber-500/10 px-1.5 py-0 text-amber-600 text-[9px] font-medium dark:text-amber-400"
+            >
+              <Bot className="size-2.5" />
+              AI Filled
+            </Badge>
+          )}
+          {field.isAiCompleted && !field.isAiFilled && (
             <Badge
               variant="secondary"
               className="gap-1 border-primary/20 bg-primary/10 px-1.5 py-0 text-primary text-[9px] font-medium"
