@@ -11,11 +11,12 @@ type DocumentStore = {
   filePreviewUrl: string | null
   viewerOpen: boolean
   extractedSections: ExtractedSection[]
+  extractionTimeMs: number | null
 
   setUploading: (file: File) => void
   setStatusMessage: (message: string) => void
   setDragging: (dragging: boolean) => void
-  completeUpload: (sections: ExtractedSection[]) => void
+  completeUpload: (sections: ExtractedSection[], timeMs?: number) => void
   resetUpload: () => void
   openViewer: () => void
   closeViewer: () => void
@@ -28,6 +29,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   filePreviewUrl: null,
   viewerOpen: false,
   extractedSections: [],
+  extractionTimeMs: null,
 
   setUploading: (file: File) => {
     const url = URL.createObjectURL(file)
@@ -36,6 +38,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       statusMessage: "Uploading file...",
       uploadedFile: file,
       filePreviewUrl: url,
+      extractionTimeMs: null,
     })
   },
 
@@ -47,8 +50,12 @@ const useDocumentStore = create<DocumentStore>((set) => ({
     set({ uploadStatus: dragging ? "dragging" : "idle" })
   },
 
-  completeUpload: (sections: ExtractedSection[]) => {
-    set({ uploadStatus: "done", extractedSections: sections })
+  completeUpload: (sections: ExtractedSection[], timeMs?: number) => {
+    set({
+      uploadStatus: "done",
+      extractedSections: sections,
+      extractionTimeMs: timeMs ?? null,
+    })
   },
 
   resetUpload: () => {
@@ -60,6 +67,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         uploadedFile: null,
         filePreviewUrl: null,
         extractedSections: [],
+        extractionTimeMs: null,
       }
     })
   },

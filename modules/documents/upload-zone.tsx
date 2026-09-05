@@ -191,8 +191,13 @@ function UploadZone() {
           <p className="text-muted-foreground text-xs">
             {useDocumentStore.getState().uploadedFile?.name}
           </p>
-          <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary animate-[slide_2s_ease-in-out]" />
+          <div className="mt-3 flex items-center gap-2">
+            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted sm:w-48">
+              <div className="h-full rounded-full bg-primary animate-[slide_2s_ease-in-out]" />
+            </div>
+            <span className="font-mono text-muted-foreground text-xs tabular-nums">
+              {elapsed}s
+            </span>
           </div>
         </>
       )}
@@ -201,7 +206,11 @@ function UploadZone() {
       {uploadStatus === "done" && (
         <>
           <p className="mb-1 font-medium text-green-600 text-sm dark:text-green-400">
-            Upload complete!
+            Extracted in{" "}
+            {(
+              (useDocumentStore.getState().extractionTimeMs ?? 0) / 1000
+            ).toFixed(1)}
+            s
           </p>
           <p className="text-muted-foreground text-xs">
             {useDocumentStore.getState().uploadedFile?.name}
