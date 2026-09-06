@@ -65,19 +65,26 @@ JSON structure:
  * no separate fill pass needed.
  *
  * @param file - The document file to extract data from (PDF, PNG, JPG, JPEG)
+ * @param userComments - Optional user context to guide missing-field inference
  * @returns Parsed and validated extraction result
  * @throws If the file type is unsupported, Gemini fails, or parsing fails
  */
 export async function extractDocumentData(
-  file: File
+  file: File,
+  userComments = ""
 ): Promise<ExtractedDocument> {
   validateFileType(file)
 
   const base64Data = await fileToBase64(file)
   const mimeType = file.type
 
+  const comments = userComments.trim()
+  const prompt = comments
+    ? `${EXTRACTION_PROMPT}\n\nUser comments (use as context, but verify against the document):\n<user_comments>\n${comments}\n</user_comments>`
+    : EXTRACTION_PROMPT
+
   const result = await model.generateContent([
-    EXTRACTION_PROMPT,
+    prompt,
     {
       inlineData: {
         mimeType,

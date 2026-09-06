@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 
 import { extractDocumentData } from "@/lib/extract"
-import { saveDocument } from "@/lib/models/document"
 
 /**
  * Allowed MIME types for upload validation.
@@ -16,7 +15,8 @@ const ALLOWED_TYPES = [
 /**
  * POST /api/extract
  *
- * Accepts a FormData with a "file" field containing a PDF, PNG, or JPG/JPEG.
+ * Accepts a FormData with a "file" field and optional "comments" context,
+ * containing a PDF, PNG, or JPG/JPEG.
  * Extracts structured data using a single Gemini call and returns it as JSON.
  *
  * Response format:
@@ -27,6 +27,8 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
+    const commentsValue = formData.get("comments")
+    const comments = typeof commentsValue === "string" ? commentsValue : ""
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
 
     console.log("[Extract API] Processing:", file.name, file.type, file.size)
 
-    const extractedData = await extractDocumentData(file)
+    const extractedData = await extractDocumentData(file, comments)
 
     console.log(
       "[Extract API] Done.",
@@ -70,25 +72,8 @@ export async function POST(request: Request) {
       Object.keys(extractedData.fields).length
     )
 
-    // Return immediately — save to DB in background
+    // Persist only when the user confirms the extracted result in the viewer.
     const documentId: string | null = null
-    saveDocument({
-      filename: file.name,
-      documentType: extractedData.documentType,
-      confidence: extractedData.confidence,
-      sections: extractedData.sections,
-      fields: extractedData.fields,
-      summary: extractedData.summary,
-    })
-      .then((result) => {
-        if (result.success) {
-          console.log("[Extract API] Saved to DB:", result.id)
-        } else {
-          console.error("[Extract API] Save failed:", result.error)
-        }
-      })
-      .catch((err) => console.error("[Extract API] Save error:", err))
-
     return NextResponse.json({
       success: true,
       data: {
