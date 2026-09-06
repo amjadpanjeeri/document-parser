@@ -1,6 +1,7 @@
 import { Geist_Mono, Outfit } from "next/font/google"
 
 import "./globals.css"
+import { AiSearchAssistant } from "@/components/ai-search-assistant"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -33,6 +34,7 @@ export default function RootLayout({
         <ThemeProvider>
           <TooltipProvider>
             {children}
+            <AiSearchAssistant />
             <Toaster />
           </TooltipProvider>
         </ThemeProvider>

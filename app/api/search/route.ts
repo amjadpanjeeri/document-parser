@@ -83,10 +83,18 @@ ${documentContext}`
           (id): id is string => typeof id === "string" && validIds.has(id)
         )
       : []
+    const matches = documents
+      .filter((document) => ids.includes(document.id))
+      .map((document) => ({
+        id: document.id,
+        filename: document.filename,
+        documentType: document.documentType,
+      }))
 
     return NextResponse.json({
       success: true,
       ids,
+      matches,
       answer: typeof parsed.answer === "string" ? parsed.answer : "",
     })
   } catch (error) {

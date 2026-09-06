@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+
 import { useDocuments } from "@/hooks/use-documents"
 import { DocumentViewer } from "@/modules/documents/components/document-viewer"
 import { LibraryView } from "@/modules/documents/components/library-view"
@@ -15,6 +17,19 @@ export default function DocumentsPage() {
     deleteDocuments,
     renameDocument,
   } = useDocuments()
+
+  useEffect(() => {
+    const documentId = new URLSearchParams(window.location.search).get(
+      "documentId"
+    )
+    if (!documentId) return
+
+    const document = documents.find((item) => item.id === documentId)
+    if (!document) return
+
+    openDocument(document)
+    window.history.replaceState({}, "", "/documents")
+  }, [documents, openDocument])
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
