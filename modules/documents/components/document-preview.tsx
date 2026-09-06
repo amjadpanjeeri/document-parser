@@ -1,13 +1,6 @@
 "use client"
 
-import {
-  FileText,
-  Maximize2,
-  Minimize2,
-  RefreshCw,
-  RotateCw,
-  Upload,
-} from "lucide-react"
+import { FileText, Minus, Plus, RefreshCw, RotateCw } from "lucide-react"
 import { useCallback, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -68,7 +61,7 @@ function DocumentPreview({
             disabled={zoom <= 0.5}
             title="Zoom out"
           >
-            <Minimize2 className="size-3.5" />
+            <Minus className="size-3.5" />
           </Button>
           <span className="min-w-[2.5rem] text-center text-muted-foreground text-xs tabular-nums">
             {Math.round(zoom * 100)}%
@@ -80,7 +73,7 @@ function DocumentPreview({
             disabled={zoom >= 3}
             title="Zoom in"
           >
-            <Maximize2 className="size-3.5" />
+            <Plus className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
@@ -90,10 +83,6 @@ function DocumentPreview({
             className="hidden sm:flex"
           >
             <RefreshCw className="size-3.5" />
-          </Button>
-          <div className="mx-0.5 h-3 w-px bg-border" />
-          <Button variant="ghost" size="icon-sm" title="Re-upload">
-            <Upload className="size-3.5" />
           </Button>
         </div>
       </div>
