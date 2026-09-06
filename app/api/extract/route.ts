@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { extractDocumentData } from "@/lib/extract"
+import { saveDocument } from "@/lib/models/document"
 
 /**
  * Allowed MIME types for upload validation.
@@ -69,9 +70,26 @@ export async function POST(request: Request) {
       Object.keys(extractedData.fields).length
     )
 
+    // Save to database
+    const saveResult = await saveDocument({
+      filename: file.name,
+      documentType: extractedData.documentType,
+      confidence: extractedData.confidence,
+      sections: extractedData.sections,
+      fields: extractedData.fields,
+      summary: extractedData.summary,
+    })
+
+    if (!saveResult.success) {
+      console.error("[Extract API] Save failed:", saveResult.error)
+    }
+
     return NextResponse.json({
       success: true,
-      data: extractedData,
+      data: {
+        ...extractedData,
+        documentId: saveResult.id || null,
+      },
     })
   } catch (error) {
     const message =
