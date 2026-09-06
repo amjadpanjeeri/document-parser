@@ -4,7 +4,11 @@ import { useEffect, useState } from "react"
 
 import { CommandPalette } from "@/components/command-palette"
 import type { StoredDocument } from "@/lib/models/document"
-import type { DocStructDocument, DocumentStatus } from "@/lib/types"
+import type {
+  DocStructDocument,
+  DocumentStatus,
+  ExtractedSection,
+} from "@/lib/types"
 import { DocumentViewer } from "@/modules/documents/document-viewer"
 import { DocumentsView } from "@/modules/documents/documents-view"
 import { Navbar } from "@/modules/documents/navbar"
@@ -12,7 +16,7 @@ import { useDocumentStore } from "@/stores/document-store"
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"upload" | "documents">("upload")
-  const { viewerOpen, closeViewer } = useDocumentStore()
+  const { viewerOpen, closeViewer, openDocumentFromDb } = useDocumentStore()
   const [documents, setDocuments] = useState<DocStructDocument[]>([])
   const [_documentsLoading, setDocumentsLoading] = useState(false)
 
@@ -45,6 +49,38 @@ export default function Page() {
       loadDocuments()
     }
   }, [activeTab])
+
+  const handleOpenDocument = async (doc: DocStructDocument) => {
+    try {
+      const { getExtractedDocument } = await import("@/app/actions/documents")
+      const fullDoc = await getExtractedDocument(doc.id)
+      if (!fullDoc) return
+
+      const sections: ExtractedSection[] = (fullDoc.sections || []).map(
+        (s) => ({
+          title: s.title,
+          fields: s.fields.map((f) => ({
+            key: f.key,
+            label: f.label,
+            value: f.value || "-",
+            confidence: Math.round(f.confidence * 100),
+            isAiCompleted: f.confidence < 0.9,
+            isAiFilled: f.confidence < 0.9,
+          })),
+        })
+      )
+
+      openDocumentFromDb({
+        documentId: doc.id,
+        fileName: fullDoc.filename,
+        documentType: fullDoc.documentType,
+        confidence: fullDoc.confidence,
+        sections,
+      })
+    } catch (err) {
+      console.error("Failed to open document:", err)
+    }
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
@@ -81,7 +117,11 @@ export default function Page() {
       />
       <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <DocumentsView documents={documents} activeTab={activeTab} />
+          <DocumentsView
+            documents={documents}
+            activeTab={activeTab}
+            onOpenDocument={handleOpenDocument}
+          />
           <DocumentViewer
             open={viewerOpen}
             onOpenChange={(v) => {

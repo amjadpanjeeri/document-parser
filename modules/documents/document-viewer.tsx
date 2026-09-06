@@ -23,6 +23,8 @@ type DocumentViewerProps = {
   fileName?: string
   fileType?: string
   sections?: ExtractedSection[]
+  /** Name shown when opened from the documents listing */
+  savedFileName?: string
 }
 
 function DocumentViewer({
@@ -38,6 +40,7 @@ function DocumentViewer({
     documentId,
     documentType,
     documentConfidence,
+    savedFileName,
     closeViewer,
   } = useDocumentStore()
 
@@ -45,7 +48,8 @@ function DocumentViewer({
     "idle"
   )
 
-  const fileName = fileNameProp ?? uploadedFile?.name ?? "document.pdf"
+  const fileName =
+    fileNameProp ?? savedFileName ?? uploadedFile?.name ?? "document.pdf"
   const fileType = uploadedFile?.type ?? "application/pdf"
   const sections =
     sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
@@ -89,6 +93,11 @@ function DocumentViewer({
 
       if (result.success) {
         setSaveStatus("saved")
+        // Close the sheet after a short delay so the user sees the "Saved!" feedback
+        setTimeout(() => {
+          closeViewer()
+          setSaveStatus("idle")
+        }, 800)
       } else {
         console.error("Save failed:", result.error)
         setSaveStatus("idle")
@@ -97,7 +106,14 @@ function DocumentViewer({
       console.error("Save error:", err)
       setSaveStatus("idle")
     }
-  }, [fileName, documentId, documentType, documentConfidence, sections])
+  }, [
+    fileName,
+    documentId,
+    documentType,
+    documentConfidence,
+    sections,
+    closeViewer,
+  ])
 
   return (
     <Sheet

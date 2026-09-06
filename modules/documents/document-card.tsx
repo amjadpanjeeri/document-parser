@@ -29,14 +29,19 @@ const statusConfig: Record<
 type DocumentCardProps = {
   document: DocStructDocument
   viewMode: "grid" | "list"
+  onClick?: () => void
 }
 
-function DocumentCard({ document, viewMode }: DocumentCardProps) {
+function DocumentCard({ document, viewMode, onClick }: DocumentCardProps) {
   const status = statusConfig[document.status]
 
   if (viewMode === "list") {
     return (
-      <div className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/50">
+      <button
+        type="button"
+        onClick={onClick}
+        className="group flex w-full cursor-pointer items-center gap-4 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/50"
+      >
         {/* Thumbnail */}
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
           <FileText className="size-5 text-muted-foreground" />
@@ -73,12 +78,16 @@ function DocumentCard({ document, viewMode }: DocumentCardProps) {
             <Trash2 className="size-3.5 text-destructive" />
           </Button>
         </div>
-      </div>
+      </button>
     )
   }
 
   return (
-    <div className="group relative flex flex-col rounded-xl border border-border bg-card transition-colors hover:bg-muted/30">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative flex w-full cursor-pointer flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/30"
+    >
       {/* Thumbnail */}
       <div className="flex aspect-[4/3] items-center justify-center rounded-t-xl bg-muted/50">
         <FileText className="size-10 text-muted-foreground/50" />
@@ -114,7 +123,7 @@ function DocumentCard({ document, viewMode }: DocumentCardProps) {
           <Trash2 className="size-3.5 text-destructive" />
         </Button>
       </div>
-    </div>
+    </button>
   )
 }
 

@@ -11,11 +11,13 @@ import { UploadHero } from "./upload-hero"
 type DocumentsViewProps = {
   documents?: DocStructDocument[]
   activeTab?: "upload" | "documents"
+  onOpenDocument?: (doc: DocStructDocument) => void
 }
 
 function DocumentsView({
   documents = [],
   activeTab = "upload",
+  onOpenDocument,
 }: DocumentsViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
@@ -38,7 +40,12 @@ function DocumentsView({
       {viewMode === "grid" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {documents.map((doc) => (
-            <DocumentCard key={doc.id} document={doc} viewMode="grid" />
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              viewMode="grid"
+              onClick={() => onOpenDocument?.(doc)}
+            />
           ))}
         </div>
       )}
@@ -46,7 +53,12 @@ function DocumentsView({
       {viewMode === "list" && (
         <div className="flex flex-col gap-2">
           {documents.map((doc) => (
-            <DocumentCard key={doc.id} document={doc} viewMode="list" />
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              viewMode="list"
+              onClick={() => onOpenDocument?.(doc)}
+            />
           ))}
         </div>
       )}

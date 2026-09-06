@@ -15,6 +15,10 @@ type DocumentStore = {
   documentId: string | null
   documentType: string | null
   documentConfidence: number | null
+  /** When opened from the documents listing (not after extraction) */
+  isSavedDocument: boolean
+  /** Filename when opened from listing (no uploadedFile available) */
+  savedFileName: string | null
 
   setUploading: (file: File) => void
   setStatusMessage: (message: string) => void
@@ -28,6 +32,14 @@ type DocumentStore = {
   resetUpload: () => void
   openViewer: () => void
   closeViewer: () => void
+  /** Open a previously saved document from the DB listing */
+  openDocumentFromDb: (doc: {
+    documentId: string
+    fileName: string
+    documentType: string
+    confidence: number
+    sections: ExtractedSection[]
+  }) => void
 }
 
 const useDocumentStore = create<DocumentStore>((set) => ({
@@ -41,6 +53,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   documentId: null,
   documentType: null,
   documentConfidence: null,
+  isSavedDocument: false,
+  savedFileName: null,
 
   setUploading: (file: File) => {
     const url = URL.createObjectURL(file)
@@ -93,7 +107,21 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         documentId: null,
         documentType: null,
         documentConfidence: null,
+        isSavedDocument: false,
+        savedFileName: null,
       }
+    })
+  },
+
+  openDocumentFromDb: (doc) => {
+    set({
+      documentId: doc.documentId,
+      documentType: doc.documentType,
+      documentConfidence: doc.confidence,
+      extractedSections: doc.sections,
+      viewerOpen: true,
+      isSavedDocument: true,
+      savedFileName: doc.fileName,
     })
   },
 
