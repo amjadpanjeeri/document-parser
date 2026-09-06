@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { toUserMessage } from "@/lib/error-message"
@@ -53,6 +53,10 @@ type UseDocumentsReturn = {
   documents: DocStructDocument[]
   documentsLoading: boolean
   loadDocuments: () => Promise<void>
+  /** Up to 3 most recent documents, shown on the landing page. */
+  recentDocuments: DocStructDocument[]
+  recentDocumentsLoading: boolean
+  loadRecentDocuments: () => Promise<void>
   /** Open a saved document from the listing in the viewer. */
   openDocument: (doc: DocStructDocument) => Promise<void>
   /** Delete documents by ID — resolves true when all were deleted. */
@@ -67,6 +71,13 @@ function useDocuments(): UseDocumentsReturn {
   const [activeTab, setActiveTab] = useState<"upload" | "documents">("upload")
   const [documents, setDocuments] = useState<DocStructDocument[]>([])
   const [documentsLoading, setDocumentsLoading] = useState(false)
+  const [recentDocuments, setRecentDocuments] = useState<DocStructDocument[]>(
+    []
+  )
+  const [recentDocumentsLoading, setRecentDocumentsLoading] = useState(false)
+  const viewerOpen = useDocumentStore((s) => s.viewerOpen)
+  const uploadStatus = useDocumentStore((s) => s.uploadStatus)
+  const wasViewerOpenRef = useRef(viewerOpen)
 
   const loadDocuments = useCallback(async () => {
     setDocumentsLoading(true)
@@ -87,12 +98,50 @@ function useDocuments(): UseDocumentsReturn {
     }
   }, [])
 
-  // Refresh the list whenever the user opens the Documents tab.
+  const loadRecentDocuments = useCallback(async () => {
+    setRecentDocumentsLoading(true)
+    try {
+      const { listExtractedDocuments } = await import("@/app/actions/documents")
+      const docs = await listExtractedDocuments(3)
+      setRecentDocuments(docs.map(mapStoredDocument))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : null
+      toast.error("Couldn't load recent documents", {
+        description: toUserMessage(
+          message,
+          "We couldn't fetch your recent documents. Please try again."
+        ),
+      })
+    } finally {
+      setRecentDocumentsLoading(false)
+    }
+  }, [])
+
+  // Landing page (Upload tab) shows recents; Documents tab shows the full list.
   useEffect(() => {
     if (activeTab === "documents") {
       loadDocuments()
+    } else {
+      loadRecentDocuments()
     }
-  }, [activeTab, loadDocuments])
+  }, [activeTab, loadDocuments, loadRecentDocuments])
+
+  // After an upload completes and the viewer closes, the new document is in
+  // the DB — refresh whichever lists are visible so it appears immediately.
+  useEffect(() => {
+    const wasOpen = wasViewerOpenRef.current
+    wasViewerOpenRef.current = viewerOpen
+
+    if (wasOpen && !viewerOpen && uploadStatus === "done") {
+      const timer = setTimeout(() => {
+        loadRecentDocuments()
+        if (activeTab === "documents") {
+          loadDocuments()
+        }
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [activeTab, viewerOpen, uploadStatus, loadDocuments, loadRecentDocuments])
 
   const openDocument = useCallback(async (doc: DocStructDocument) => {
     try {
@@ -165,6 +214,9 @@ function useDocuments(): UseDocumentsReturn {
     documents,
     documentsLoading,
     loadDocuments,
+    recentDocuments,
+    recentDocumentsLoading,
+    loadRecentDocuments,
     openDocument,
     deleteDocuments,
   }

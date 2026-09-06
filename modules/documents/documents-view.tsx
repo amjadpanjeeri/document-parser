@@ -1,14 +1,14 @@
 "use client"
 
 import { Loader2 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 
 import type { DocStructDocument } from "@/lib/types"
-import { useDocumentStore } from "@/stores/document-store"
 import { DeleteDialog } from "./delete-dialog"
 import { DocumentCard } from "./document-card"
 import { EmptyState } from "./empty-state"
 import { PageHeader } from "./page-header"
+import { RecentDocuments } from "./recent-documents"
 import { SelectionBar } from "./selection-bar"
 import { UploadHero } from "./upload-hero"
 
@@ -16,46 +16,43 @@ type DocumentsViewProps = {
   documents?: DocStructDocument[]
   documentsLoading?: boolean
   activeTab?: "upload" | "documents"
+  /** Up to 3 most recent documents for the landing page. */
+  recentDocuments?: DocStructDocument[]
+  recentDocumentsLoading?: boolean
+  /** Switch to the Documents tab (e.g. "View all"). */
+  onGoToDocuments?: () => void
   onOpenDocument?: (doc: DocStructDocument) => void
   /** Delete documents by ID — resolves true when all were deleted. */
   onDeleteDocuments?: (ids: string[]) => Promise<boolean>
-  /** Reload the document list (e.g. after an upload finished). */
-  onRefreshDocuments?: () => void
 }
 
 function DocumentsView({
   documents = [],
   documentsLoading = false,
   activeTab = "upload",
+  recentDocuments = [],
+  recentDocumentsLoading = false,
+  onGoToDocuments,
   onOpenDocument,
   onDeleteDocuments,
-  onRefreshDocuments,
 }: DocumentsViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const viewerOpen = useDocumentStore((s) => s.viewerOpen)
-  const uploadStatus = useDocumentStore((s) => s.uploadStatus)
-  const wasViewerOpenRef = useRef(viewerOpen)
-
-  // If a document was just uploaded from this (empty) tab and the viewer is
-  // closed, the DB save may still be finishing — refresh the list so the new
-  // document appears without requiring a tab switch.
-  useEffect(() => {
-    const wasOpen = wasViewerOpenRef.current
-    wasViewerOpenRef.current = viewerOpen
-
-    if (activeTab !== "documents") return
-    if (!wasOpen || viewerOpen) return
-    if (uploadStatus !== "done") return
-
-    const timer = setTimeout(() => onRefreshDocuments?.(), 1000)
-    return () => clearTimeout(timer)
-  }, [activeTab, viewerOpen, uploadStatus, onRefreshDocuments])
 
   if (activeTab === "upload") {
-    return <UploadHero />
+    return (
+      <div className="flex flex-col gap-10">
+        <UploadHero />
+        <RecentDocuments
+          documents={recentDocuments}
+          loading={recentDocumentsLoading}
+          onViewAll={onGoToDocuments}
+          onOpen={onOpenDocument}
+        />
+      </div>
+    )
   }
 
   if (documents.length === 0) {

@@ -14,7 +14,8 @@ export default function Page() {
     setActiveTab,
     documents,
     documentsLoading,
-    loadDocuments,
+    recentDocuments,
+    recentDocumentsLoading,
     openDocument,
     deleteDocuments,
   } = useDocuments()
@@ -58,9 +59,11 @@ export default function Page() {
             documents={documents}
             documentsLoading={documentsLoading}
             activeTab={activeTab}
+            recentDocuments={recentDocuments}
+            recentDocumentsLoading={recentDocumentsLoading}
+            onGoToDocuments={() => setActiveTab("documents")}
             onOpenDocument={openDocument}
             onDeleteDocuments={deleteDocuments}
-            onRefreshDocuments={loadDocuments}
           />
           <DocumentViewer
             open={viewerOpen}
