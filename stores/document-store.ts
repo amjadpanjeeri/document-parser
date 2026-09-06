@@ -29,6 +29,8 @@ type DocumentStore = {
     meta?: { documentId?: string; documentType?: string; confidence?: number }
   ) => void
   updateExtractedSections: (sections: ExtractedSection[]) => void
+  /** Update a single field's value across all sections */
+  updateFieldValue: (key: string, value: string) => void
   resetUpload: () => void
   openViewer: () => void
   closeViewer: () => void
@@ -92,6 +94,17 @@ const useDocumentStore = create<DocumentStore>((set) => ({
 
   updateExtractedSections: (sections: ExtractedSection[]) => {
     set({ extractedSections: sections })
+  },
+
+  updateFieldValue: (key: string, value: string) => {
+    set((state) => ({
+      extractedSections: state.extractedSections.map((section) => ({
+        ...section,
+        fields: section.fields.map((field) =>
+          field.key === key ? { ...field, value } : field
+        ),
+      })),
+    }))
   },
 
   resetUpload: () => {

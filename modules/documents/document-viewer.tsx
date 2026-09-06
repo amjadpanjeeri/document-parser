@@ -37,9 +37,6 @@ function DocumentViewer({
     uploadedFile,
     filePreviewUrl,
     extractedSections,
-    documentId,
-    documentType,
-    documentConfidence,
     savedFileName,
     closeViewer,
   } = useDocumentStore()
@@ -57,8 +54,11 @@ function DocumentViewer({
   const handleSave = useCallback(async () => {
     setSaveStatus("saving")
     try {
+      // Read directly from store to get the latest edited values
+      const currentSections = useDocumentStore.getState().extractedSections
+
       const mappedData = {
-        sections: sections.map((s) => ({
+        sections: currentSections.map((s) => ({
           title: s.title,
           fields: s.fields.map((f) => ({
             key: f.key,
@@ -68,32 +68,32 @@ function DocumentViewer({
           })),
         })),
         fields: Object.fromEntries(
-          sections.flatMap((s) => s.fields.map((f) => [f.key, f.value]))
+          currentSections.flatMap((s) => s.fields.map((f) => [f.key, f.value]))
         ),
       }
 
+      const state = useDocumentStore.getState()
       const actions = await import("@/app/actions/documents")
 
       let result: { success: boolean; error?: string }
-      if (documentId) {
+      if (state.documentId) {
         // Update existing document
-        result = await actions.updateExtractedDocument(documentId, {
+        result = await actions.updateExtractedDocument(state.documentId, {
           ...mappedData,
-          confidence: documentConfidence || 0,
+          confidence: state.documentConfidence || 0,
         })
       } else {
         // Save new document
         result = await actions.saveExtractedDocument({
           filename: fileName,
-          documentType: documentType || "Other",
-          confidence: documentConfidence || 0,
+          documentType: state.documentType || "Other",
+          confidence: state.documentConfidence || 0,
           ...mappedData,
         })
       }
 
       if (result.success) {
         setSaveStatus("saved")
-        // Close the sheet after a short delay so the user sees the "Saved!" feedback
         setTimeout(() => {
           closeViewer()
           setSaveStatus("idle")
@@ -106,14 +106,7 @@ function DocumentViewer({
       console.error("Save error:", err)
       setSaveStatus("idle")
     }
-  }, [
-    fileName,
-    documentId,
-    documentType,
-    documentConfidence,
-    sections,
-    closeViewer,
-  ])
+  }, [fileName, closeViewer])
 
   return (
     <Sheet

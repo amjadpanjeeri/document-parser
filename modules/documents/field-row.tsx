@@ -8,16 +8,10 @@ import { ConfidenceBar } from "./confidence-bar"
 type FieldRowProps = {
   field: ExtractedField
   isEditing: boolean
-  editValue: string
   onEditChange: (value: string) => void
 }
 
-function FieldRow({
-  field,
-  isEditing,
-  editValue,
-  onEditChange,
-}: FieldRowProps) {
+function FieldRow({ field, isEditing, onEditChange }: FieldRowProps) {
   return (
     <div
       className={cn(
@@ -52,7 +46,7 @@ function FieldRow({
         {isEditing ? (
           <input
             type="text"
-            value={editValue}
+            value={field.value}
             onChange={(e) => onEditChange(e.target.value)}
             className="w-full rounded-md border border-primary/30 bg-background px-2 py-0.5 font-medium text-sm outline-none ring-primary/20 focus:ring-1"
           />

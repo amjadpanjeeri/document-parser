@@ -4,6 +4,7 @@ import { useCallback, useState } from "react"
 
 import type { ExtractedSection } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useDocumentStore } from "@/stores/document-store"
 import { FieldRow } from "./field-row"
 import { FieldsStatsBar } from "./fields-stats-bar"
 
@@ -15,8 +16,8 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
   const [copied, setCopied] = useState(false)
   const [rightView, setRightView] = useState<"fields" | "json">("fields")
   const [isEditMode, setIsEditMode] = useState(false)
-  const [editedValues, setEditedValues] = useState<Record<string, string>>({})
   const [rawJson, setRawJson] = useState("")
+  const { updateFieldValue } = useDocumentStore()
 
   const totalCount = sections.reduce((acc, s) => acc + s.fields.length, 0)
   const aiCount = sections.reduce(
@@ -40,18 +41,21 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
     const json: Record<string, unknown> = {}
     for (const section of sections) {
       for (const field of section.fields) {
-        json[field.key] = editedValues[field.key] ?? field.value
+        json[field.key] = field.value
       }
     }
     return JSON.stringify(json, null, 2)
-  }, [sections, editedValues])
+  }, [sections])
 
   const displayedJson = rawJson || jsonData()
 
-  const handleFieldEdit = useCallback((key: string, value: string) => {
-    setEditedValues((prev) => ({ ...prev, [key]: value }))
-    setRawJson("")
-  }, [])
+  const handleFieldEdit = useCallback(
+    (key: string, value: string) => {
+      updateFieldValue(key, value)
+      setRawJson("")
+    },
+    [updateFieldValue]
+  )
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(displayedJson)
@@ -88,7 +92,6 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
                       key={field.key}
                       field={field}
                       isEditing={isEditMode}
-                      editValue={editedValues[field.key] ?? field.value}
                       onEditChange={(v) => handleFieldEdit(field.key, v)}
                     />
                   ))}
@@ -99,7 +102,23 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
         ) : (
           <textarea
             value={displayedJson}
-            onChange={(e) => setRawJson(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value
+              setRawJson(newValue)
+              // Sync JSON edits back to the store so save picks them up
+              try {
+                const parsed = JSON.parse(newValue)
+                if (typeof parsed === "object" && parsed !== null) {
+                  for (const [key, val] of Object.entries(parsed)) {
+                    if (typeof val === "string" || typeof val === "number") {
+                      updateFieldValue(key, String(val))
+                    }
+                  }
+                }
+              } catch {
+                // Invalid JSON — don't sync yet, wait for valid JSON
+              }
+            }}
             readOnly={!isEditMode}
             spellCheck={false}
             className={cn(
