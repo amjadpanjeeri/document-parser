@@ -1,100 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-
 import { CommandPalette } from "@/components/command-palette"
-import { toUserMessage } from "@/lib/error-message"
-import type { StoredDocument } from "@/lib/models/document"
-import type {
-  DocStructDocument,
-  DocumentStatus,
-  ExtractedSection,
-} from "@/lib/types"
+import { useDocuments } from "@/hooks/use-documents"
 import { DocumentViewer } from "@/modules/documents/document-viewer"
 import { DocumentsView } from "@/modules/documents/documents-view"
 import { Navbar } from "@/modules/documents/navbar"
 import { useDocumentStore } from "@/stores/document-store"
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<"upload" | "documents">("upload")
-  const { viewerOpen, closeViewer, openDocumentFromDb } = useDocumentStore()
-  const [documents, setDocuments] = useState<DocStructDocument[]>([])
-  const [_documentsLoading, setDocumentsLoading] = useState(false)
-
-  useEffect(() => {
-    async function loadDocuments() {
-      setDocumentsLoading(true)
-      try {
-        const { listExtractedDocuments } = await import(
-          "@/app/actions/documents"
-        )
-        const docs = await listExtractedDocuments()
-        const mapped: DocStructDocument[] = docs.map((doc: StoredDocument) => ({
-          id: doc._id?.toString() || "",
-          name: doc.filename,
-          type: doc.documentType as DocStructDocument["type"],
-          status: (doc.confidence >= 0.8
-            ? "ready"
-            : "needs_review") as DocumentStatus,
-          uploadedAt: doc.createdAt.toISOString(),
-          confidence: doc.confidence,
-        }))
-        setDocuments(mapped)
-      } catch (err) {
-        const message = err instanceof Error ? err.message : null
-        toast.error("Couldn't load your documents", {
-          description: toUserMessage(
-            message,
-            "We couldn't fetch your documents from the database. Please try again."
-          ),
-        })
-      } finally {
-        setDocumentsLoading(false)
-      }
-    }
-    if (activeTab === "documents") {
-      loadDocuments()
-    }
-  }, [activeTab])
-
-  const handleOpenDocument = async (doc: DocStructDocument) => {
-    try {
-      const { getExtractedDocument } = await import("@/app/actions/documents")
-      const fullDoc = await getExtractedDocument(doc.id)
-      if (!fullDoc) return
-
-      const sections: ExtractedSection[] = (fullDoc.sections || []).map(
-        (s) => ({
-          title: s.title,
-          fields: s.fields.map((f) => ({
-            key: f.key,
-            label: f.label,
-            value: f.value || "-",
-            confidence: Math.round(f.confidence * 100),
-            isAiCompleted: f.confidence < 0.9,
-            isAiFilled: f.confidence < 0.9,
-          })),
-        })
-      )
-
-      openDocumentFromDb({
-        documentId: doc.id,
-        fileName: fullDoc.filename,
-        documentType: fullDoc.documentType,
-        confidence: fullDoc.confidence,
-        sections,
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : null
-      toast.error("Couldn't open this document", {
-        description: toUserMessage(
-          message,
-          "The document data couldn't be loaded from the database. Please try again."
-        ),
-      })
-    }
-  }
+  const { viewerOpen, closeViewer } = useDocumentStore()
+  const {
+    activeTab,
+    setActiveTab,
+    documents,
+    documentsLoading,
+    openDocument,
+    deleteDocuments,
+  } = useDocuments()
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
@@ -133,8 +55,10 @@ export default function Page() {
         <div className="mx-auto w-full max-w-6xl">
           <DocumentsView
             documents={documents}
+            documentsLoading={documentsLoading}
             activeTab={activeTab}
-            onOpenDocument={handleOpenDocument}
+            onOpenDocument={openDocument}
+            onDeleteDocuments={deleteDocuments}
           />
           <DocumentViewer
             open={viewerOpen}

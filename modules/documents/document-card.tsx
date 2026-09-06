@@ -1,9 +1,6 @@
-import { ExternalLink, FileText, Trash2 } from "lucide-react"
-
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import type { DocStructDocument, DocumentStatus } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { DocumentCardGrid } from "./document-card-grid"
+import { DocumentCardList } from "./document-card-list"
 
 const statusConfig: Record<
   DocumentStatus,
@@ -30,101 +27,39 @@ type DocumentCardProps = {
   document: DocStructDocument
   viewMode: "grid" | "list"
   onClick?: () => void
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
+  onDelete?: (id: string) => void
 }
 
-function DocumentCard({ document, viewMode, onClick }: DocumentCardProps) {
+function DocumentCard({
+  document,
+  viewMode,
+  onClick,
+  selected = false,
+  onToggleSelect,
+  onDelete,
+}: DocumentCardProps) {
   const status = statusConfig[document.status]
 
-  if (viewMode === "list") {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="group flex w-full cursor-pointer items-center gap-4 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/50"
-      >
-        {/* Thumbnail */}
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <FileText className="size-5 text-muted-foreground" />
-        </div>
-
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-sm">{document.name}</p>
-          <div className="mt-0.5 flex items-center gap-2 text-muted-foreground text-xs">
-            <span>{document.type}</span>
-            <span>·</span>
-            <span>{document.uploadedAt}</span>
-          </div>
-        </div>
-
-        {/* Status */}
-        <Badge className={cn("shrink-0", status.className)}>
-          {status.label}
-        </Badge>
-
-        {/* Confidence */}
-        {document.confidence !== undefined && (
-          <span className="hidden w-12 shrink-0 text-right text-muted-foreground text-xs sm:inline">
-            {document.confidence}%
-          </span>
-        )}
-
-        {/* Actions */}
-        <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button variant="ghost" size="icon-xs">
-            <ExternalLink className="size-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon-xs">
-            <Trash2 className="size-3.5 text-destructive" />
-          </Button>
-        </div>
-      </button>
-    )
+  const sharedProps = {
+    document,
+    selected,
+    statusLabel: status.label,
+    statusClassName: status.className,
+    onClick,
+    onToggleSelect: onToggleSelect
+      ? () => onToggleSelect(document.id)
+      : undefined,
+    onDelete: onDelete ? () => onDelete(document.id) : undefined,
   }
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative flex w-full cursor-pointer flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/30"
-    >
-      {/* Thumbnail */}
-      <div className="flex aspect-[4/3] items-center justify-center rounded-t-xl bg-muted/50">
-        <FileText className="size-10 text-muted-foreground/50" />
-      </div>
+  if (viewMode === "list") {
+    return <DocumentCardList {...sharedProps} />
+  }
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="truncate font-medium text-sm">{document.name}</p>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">
-            {document.type}
-          </Badge>
-          <Badge className={cn("text-[10px]", status.className)}>
-            {status.label}
-          </Badge>
-        </div>
-
-        <div className="mt-auto flex items-center justify-between text-muted-foreground text-xs">
-          <span>{document.uploadedAt}</span>
-          {document.confidence !== undefined && (
-            <span>{document.confidence}%</span>
-          )}
-        </div>
-      </div>
-
-      {/* Hover Actions */}
-      <div className="absolute top-2 right-2 flex gap-1 rounded-lg bg-background/80 p-1 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
-        <Button variant="ghost" size="icon-xs">
-          <ExternalLink className="size-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon-xs">
-          <Trash2 className="size-3.5 text-destructive" />
-        </Button>
-      </div>
-    </button>
-  )
+  return <DocumentCardGrid {...sharedProps} />
 }
 
+export type { DocumentCardProps }
 export { DocumentCard }

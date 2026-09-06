@@ -142,6 +142,34 @@ async function deleteDocument(
 }
 
 /**
+ * Delete multiple documents by IDs.
+ */
+async function deleteManyDocuments(
+  ids: string[]
+): Promise<{ deletedCount: number; success: boolean; error?: string }> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { deletedCount: 0, success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
+    const objectIds = ids.map((id) => new ObjectId(id))
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .deleteMany({ _id: { $in: objectIds } })
+
+    console.log("[DB] Documents deleted:", result.deletedCount)
+    return { success: true, deletedCount: result.deletedCount }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to delete documents"
+    console.error("[DB] Delete error:", message)
+    return { deletedCount: 0, success: false, error: message }
+  }
+}
+
+/**
  * Update a document by ID.
  */
 async function updateDocument(
@@ -174,6 +202,7 @@ async function updateDocument(
 export type { StoredDocument, StoredField, StoredSection }
 export {
   deleteDocument,
+  deleteManyDocuments,
   getDocument,
   listDocuments,
   saveDocument,

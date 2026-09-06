@@ -2,6 +2,7 @@
 
 import {
   deleteDocument,
+  deleteManyDocuments,
   getDocument,
   listDocuments,
   type StoredDocument,
@@ -69,6 +70,15 @@ async function deleteExtractedDocument(
 }
 
 /**
+ * Delete multiple documents by IDs.
+ */
+async function deleteExtractedDocuments(
+  ids: string[]
+): Promise<{ deletedCount: number; success: boolean; error?: string }> {
+  return deleteManyDocuments(ids)
+}
+
+/**
  * Update a saved document's fields (e.g. after user edits).
  */
 async function updateExtractedDocument(
@@ -92,6 +102,7 @@ async function updateExtractedDocument(
 
 export {
   deleteExtractedDocument,
+  deleteExtractedDocuments,
   getExtractedDocument,
   listExtractedDocuments,
   saveExtractedDocument,
