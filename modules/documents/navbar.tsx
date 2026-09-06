@@ -1,11 +1,26 @@
 "use client"
 
-import { FileText, Upload } from "lucide-react"
+import { FileText, Moon, Sun } from "lucide-react"
 import Link from "next/link"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 function Navbar() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  const isDark = resolvedTheme === "dark"
+
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
       <div className="flex w-full items-center justify-between gap-4 md:gap-6">
@@ -22,10 +37,31 @@ function Navbar() {
           </span>
         </Link>
 
-        {/* Avatar */}
-        <Avatar size="sm">
-          <AvatarFallback>DS</AvatarFallback>
-        </Avatar>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+                aria-label={
+                  isDark ? "Switch to light theme" : "Switch to dark theme"
+                }
+                disabled={!mounted}
+              >
+                {mounted && isDark ? <Sun /> : <Moon />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isDark ? "Switch to light theme" : "Switch to dark theme"}
+            </TooltipContent>
+          </Tooltip>
+
+          <Avatar size="sm">
+            <AvatarFallback>DS</AvatarFallback>
+          </Avatar>
+        </div>
       </div>
     </header>
   )
