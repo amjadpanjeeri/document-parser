@@ -74,6 +74,7 @@ type UseDocumentsReturn = {
   openDocument: (doc: DocStructDocument) => Promise<void>
   /** Delete documents by ID — resolves true when all were deleted. */
   deleteDocuments: (ids: string[]) => Promise<boolean>
+  renameDocument: (id: string, filename: string) => Promise<boolean>
 }
 
 /**
@@ -220,6 +221,26 @@ function useDocuments(): UseDocumentsReturn {
     [loadDocuments]
   )
 
+  const renameDocument = useCallback(
+    async (id: string, filename: string) => {
+      const response = await fetch(`/api/documents/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename }),
+      })
+      const result = (await response.json()) as {
+        success?: boolean
+        error?: string
+      }
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Filename update failed")
+      }
+      await loadDocuments()
+      return true
+    },
+    [loadDocuments]
+  )
+
   return {
     documents,
     documentsLoading,
@@ -229,6 +250,7 @@ function useDocuments(): UseDocumentsReturn {
     loadRecentDocuments,
     openDocument,
     deleteDocuments,
+    renameDocument,
   }
 }
 

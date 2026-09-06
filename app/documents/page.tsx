@@ -8,8 +8,13 @@ import { useDocumentStore } from "@/stores/document-store"
 
 export default function DocumentsPage() {
   const { viewerOpen, closeViewer } = useDocumentStore()
-  const { documents, documentsLoading, openDocument, deleteDocuments } =
-    useDocuments()
+  const {
+    documents,
+    documentsLoading,
+    openDocument,
+    deleteDocuments,
+    renameDocument,
+  } = useDocuments()
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
@@ -46,6 +51,7 @@ export default function DocumentsPage() {
             documentsLoading={documentsLoading}
             onOpenDocument={openDocument}
             onDeleteDocuments={deleteDocuments}
+            onRenameDocument={renameDocument}
           />
           <DocumentViewer
             open={viewerOpen}

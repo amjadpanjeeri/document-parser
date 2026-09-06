@@ -1,7 +1,19 @@
-import { ExternalLink, FileText, Trash2 } from "lucide-react"
+import {
+  ExternalLink,
+  FileText,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { DocStructDocument } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { SelectToggle } from "./select-toggle"
@@ -14,6 +26,7 @@ type DocumentCardListProps = {
   onClick?: () => void
   onToggleSelect?: () => void
   onDelete?: () => void
+  onRename?: () => void
 }
 
 function DocumentCardList({
@@ -24,6 +37,7 @@ function DocumentCardList({
   onClick,
   onToggleSelect,
   onDelete,
+  onRename,
 }: DocumentCardListProps) {
   return (
     <div
@@ -85,16 +99,33 @@ function DocumentCardList({
         >
           <ExternalLink className="size-3.5" />
         </Button>
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={`Delete ${document.name}`}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+        {(onDelete || onRename) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`More actions for ${document.name}`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onRename && (
+                <DropdownMenuItem onSelect={onRename}>
+                  <Pencil />
+                  Edit name
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+                  <Trash2 />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>

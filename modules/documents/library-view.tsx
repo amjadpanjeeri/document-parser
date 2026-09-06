@@ -5,6 +5,14 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import type { DocStructDocument } from "@/lib/types"
 import { DeleteDialog } from "./delete-dialog"
@@ -18,6 +26,7 @@ type LibraryViewProps = {
   documentsLoading?: boolean
   onOpenDocument?: (doc: DocStructDocument) => void
   onDeleteDocuments?: (ids: string[]) => Promise<boolean>
+  onRenameDocument?: (id: string, filename: string) => Promise<boolean>
 }
 
 export function LibraryView({
@@ -25,6 +34,7 @@ export function LibraryView({
   documentsLoading = false,
   onOpenDocument,
   onDeleteDocuments,
+  onRenameDocument,
 }: LibraryViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [query, setQuery] = useState("")
@@ -35,6 +45,11 @@ export function LibraryView({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [renameTarget, setRenameTarget] = useState<DocStructDocument | null>(
+    null
+  )
+  const [renameValue, setRenameValue] = useState("")
+  const [renaming, setRenaming] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300)
@@ -87,6 +102,30 @@ export function LibraryView({
   const clearSelection = () => setSelectedIds([])
 
   const requestDelete = (ids: string[]) => setDeleteTarget(ids)
+
+  const requestRename = (id: string) => {
+    const document = documents.find((item) => item.id === id)
+    if (!document) return
+    setRenameTarget(document)
+    setRenameValue(document.name)
+  }
+
+  const confirmRename = async () => {
+    if (!renameTarget || !onRenameDocument || !renameValue.trim()) return
+    setRenaming(true)
+    try {
+      await onRenameDocument(renameTarget.id, renameValue.trim())
+      toast.success("Filename updated")
+      setRenameTarget(null)
+    } catch (error) {
+      toast.error("Couldn't rename the document", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      })
+    } finally {
+      setRenaming(false)
+    }
+  }
 
   const searchWithAi = async () => {
     if (!query.trim()) return
@@ -232,6 +271,7 @@ export function LibraryView({
               selected={selectedIds.includes(doc.id)}
               onToggleSelect={toggleSelect}
               onDelete={(id) => requestDelete([id])}
+              onRename={requestRename}
             />
           ))}
         </div>
@@ -246,6 +286,7 @@ export function LibraryView({
               selected={selectedIds.includes(doc.id)}
               onToggleSelect={toggleSelect}
               onDelete={(id) => requestDelete([id])}
+              onRename={requestRename}
             />
           ))}
         </div>
@@ -258,6 +299,49 @@ export function LibraryView({
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
       />
+
+      <Dialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !renaming) setRenameTarget(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit filename</DialogTitle>
+            <DialogDescription>
+              Update the name shown in your document library.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(event) => setRenameValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") confirmRename()
+            }}
+            maxLength={255}
+            autoFocus
+            aria-label="Document filename"
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRenameTarget(null)}
+              disabled={renaming}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmRename}
+              disabled={renaming || !renameValue.trim()}
+            >
+              {renaming ? "Saving..." : "Save name"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

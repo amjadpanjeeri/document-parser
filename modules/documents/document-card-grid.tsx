@@ -1,7 +1,13 @@
-import { FileText, Trash2 } from "lucide-react"
+import { FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { DocStructDocument } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { SelectToggle } from "./select-toggle"
@@ -14,6 +20,7 @@ type DocumentCardGridProps = {
   onClick?: () => void
   onToggleSelect?: () => void
   onDelete?: () => void
+  onRename?: () => void
 }
 
 function DocumentCardGrid({
@@ -24,6 +31,7 @@ function DocumentCardGrid({
   onClick,
   onToggleSelect,
   onDelete,
+  onRename,
 }: DocumentCardGridProps) {
   const showActions = "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 
@@ -79,23 +87,40 @@ function DocumentCardGrid({
         </div>
       )}
 
-      {/* Delete */}
-      {onDelete && (
+      {/* More actions */}
+      {(onDelete || onRename) && (
         <div
           className={cn(
             "absolute top-2 right-2 rounded-lg bg-background/80 p-0.5 shadow-sm backdrop-blur-sm transition-opacity",
             showActions
           )}
         >
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            aria-label={`Delete ${document.name}`}
-            onClick={onDelete}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`More actions for ${document.name}`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onRename && (
+                <DropdownMenuItem onSelect={onRename}>
+                  <Pencil />
+                  Edit name
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+                  <Trash2 />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
     </div>

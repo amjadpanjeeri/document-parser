@@ -30,6 +30,7 @@ type DocumentCardProps = {
   selected?: boolean
   onToggleSelect?: (id: string) => void
   onDelete?: (id: string) => void
+  onRename?: (id: string) => void
 }
 
 function DocumentCard({
@@ -39,6 +40,7 @@ function DocumentCard({
   selected = false,
   onToggleSelect,
   onDelete,
+  onRename,
 }: DocumentCardProps) {
   const status = statusConfig[document.status]
 
@@ -52,6 +54,7 @@ function DocumentCard({
       ? () => onToggleSelect(document.id)
       : undefined,
     onDelete: onDelete ? () => onDelete(document.id) : undefined,
+    onRename: onRename ? () => onRename(document.id) : undefined,
   }
 
   if (viewMode === "list") {
