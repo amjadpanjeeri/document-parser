@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { DocStructDocument } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { formatDocumentDate } from "../utils/format-document-date"
 import { SelectToggle } from "./select-toggle"
 
 type DocumentCardListProps = {
@@ -71,7 +72,7 @@ function DocumentCardList({
           <div className="mt-0.5 flex items-center gap-2 text-muted-foreground text-xs">
             <span className="capitalize">{document.type}</span>
             <span>·</span>
-            <span>{document.uploadedAt}</span>
+            <span>{formatDocumentDate(document.uploadedAt)}</span>
           </div>
         </div>
       </button>

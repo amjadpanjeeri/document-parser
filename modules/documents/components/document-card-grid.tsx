@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { DocStructDocument } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { formatDocumentDate } from "../utils/format-document-date"
 import { SelectToggle } from "./select-toggle"
 
 type DocumentCardGridProps = {
@@ -73,7 +74,7 @@ function DocumentCardGrid({
           </div>
 
           <div className="mt-auto flex items-center justify-between text-muted-foreground text-xs">
-            <span>{document.uploadedAt}</span>
+            <span>{formatDocumentDate(document.uploadedAt)}</span>
             {document.confidence !== undefined && (
               <span>{document.confidence}%</span>
             )}
