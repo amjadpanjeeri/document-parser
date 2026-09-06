@@ -1,33 +1,25 @@
-import { FileText, FileUp, Sparkles } from "lucide-react"
+import { FileUp } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { UploadZone } from "./upload-zone"
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-10 md:py-16">
-      {/* Upload Zone */}
-      <div className="flex w-full max-w-lg flex-col items-center rounded-2xl border-2 border-dashed border-border p-8 transition-colors hover:border-primary/40 hover:bg-muted/30 md:p-12">
-        <div className="mb-6 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-          <FileUp className="size-8 text-primary" />
+    <div className="flex flex-col items-center gap-8 py-8 md:py-12">
+      {/* Heading */}
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+          <FileUp className="size-7 text-primary" />
         </div>
-
-        <h3 className="mb-1 font-semibold text-lg">
-          Upload your first document
-        </h3>
-        <p className="mb-6 max-w-sm text-center text-muted-foreground text-sm">
-          Supports PDF, PNG, JPG, and scanned documents
+        <h3 className="font-semibold text-xl">No documents yet</h3>
+        <p className="max-w-sm text-muted-foreground text-sm">
+          Upload a PDF, PNG, or JPG — DocStruct extracts every field and turns
+          messy documents into structured, queryable data.
         </p>
-
-        <Button size="lg" className="gap-2">
-          <FileText className="size-4" />
-          Upload Document
-        </Button>
       </div>
 
-      {/* Hint */}
-      <div className="mt-6 flex items-center gap-1.5 text-muted-foreground text-sm">
-        <Sparkles className="size-3.5" />
-        We&apos;ll extract structured data automatically
+      {/* Real, functional uploader */}
+      <div className="w-full max-w-2xl">
+        <UploadZone />
       </div>
     </div>
   )
