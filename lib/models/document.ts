@@ -41,12 +41,17 @@ const COLLECTION_NAME = "documents"
 
 /**
  * Save an extracted document to the database.
+ * Returns a graceful failure if DB is unavailable.
  */
 async function saveDocument(
   data: Omit<StoredDocument, "_id" | "createdAt" | "updatedAt">
 ): Promise<{ id?: string; success: boolean; error?: string }> {
   try {
-    const { db } = await connectToDatabase()
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
     const now = new Date()
 
     const result = await db.collection(COLLECTION_NAME).insertOne({
@@ -75,7 +80,10 @@ async function saveDocument(
  */
 async function getDocument(id: string): Promise<StoredDocument | null> {
   try {
-    const { db } = await connectToDatabase()
+    const connection = await connectToDatabase()
+    if (!connection) return null
+    const { db } = connection
+
     const doc = await db
       .collection(COLLECTION_NAME)
       .findOne({ _id: new ObjectId(id) })
@@ -92,7 +100,10 @@ async function getDocument(id: string): Promise<StoredDocument | null> {
  */
 async function listDocuments(limit = 50): Promise<StoredDocument[]> {
   try {
-    const { db } = await connectToDatabase()
+    const connection = await connectToDatabase()
+    if (!connection) return []
+    const { db } = connection
+
     const docs = await db
       .collection(COLLECTION_NAME)
       .find()
@@ -114,7 +125,12 @@ async function deleteDocument(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { db } = await connectToDatabase()
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
     await db.collection(COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) })
     return { success: true }
   } catch (error) {
@@ -125,5 +141,41 @@ async function deleteDocument(
   }
 }
 
+/**
+ * Update a document by ID.
+ */
+async function updateDocument(
+  id: string,
+  data: Partial<Omit<StoredDocument, "_id" | "createdAt">>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
+    await db
+      .collection(COLLECTION_NAME)
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { ...data, updatedAt: new Date() } }
+      )
+    console.log("[DB] Document updated:", id)
+    return { success: true }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update document"
+    console.error("[DB] Update error:", message)
+    return { success: false, error: message }
+  }
+}
+
 export type { StoredDocument, StoredField, StoredSection }
-export { deleteDocument, getDocument, listDocuments, saveDocument }
+export {
+  deleteDocument,
+  getDocument,
+  listDocuments,
+  saveDocument,
+  updateDocument,
+}

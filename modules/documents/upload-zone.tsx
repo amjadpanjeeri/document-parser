@@ -60,10 +60,14 @@ function UploadZone() {
       const startTime = Date.now()
       try {
         setStatusMessage("Extracting with AI...")
-        const sections = await extract(file)
+        const result = await extract(file)
         const duration = Date.now() - startTime
 
-        completeUpload(sections, duration)
+        completeUpload(result.sections, duration, {
+          documentId: result.documentId ?? undefined,
+          documentType: result.documentType ?? undefined,
+          confidence: result.confidence ?? undefined,
+        })
         openViewer()
       } catch (err) {
         console.error("[UploadZone] Extraction failed:", err)

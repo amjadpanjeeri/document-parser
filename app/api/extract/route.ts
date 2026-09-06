@@ -70,8 +70,9 @@ export async function POST(request: Request) {
       Object.keys(extractedData.fields).length
     )
 
-    // Save to database
-    const saveResult = await saveDocument({
+    // Return immediately — save to DB in background
+    const documentId: string | null = null
+    saveDocument({
       filename: file.name,
       documentType: extractedData.documentType,
       confidence: extractedData.confidence,
@@ -79,16 +80,20 @@ export async function POST(request: Request) {
       fields: extractedData.fields,
       summary: extractedData.summary,
     })
-
-    if (!saveResult.success) {
-      console.error("[Extract API] Save failed:", saveResult.error)
-    }
+      .then((result) => {
+        if (result.success) {
+          console.log("[Extract API] Saved to DB:", result.id)
+        } else {
+          console.error("[Extract API] Save failed:", result.error)
+        }
+      })
+      .catch((err) => console.error("[Extract API] Save error:", err))
 
     return NextResponse.json({
       success: true,
       data: {
         ...extractedData,
-        documentId: saveResult.id || null,
+        documentId,
       },
     })
   } catch (error) {

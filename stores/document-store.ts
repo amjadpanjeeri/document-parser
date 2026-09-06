@@ -12,11 +12,19 @@ type DocumentStore = {
   viewerOpen: boolean
   extractedSections: ExtractedSection[]
   extractionTimeMs: number | null
+  documentId: string | null
+  documentType: string | null
+  documentConfidence: number | null
 
   setUploading: (file: File) => void
   setStatusMessage: (message: string) => void
   setDragging: (dragging: boolean) => void
-  completeUpload: (sections: ExtractedSection[], timeMs?: number) => void
+  completeUpload: (
+    sections: ExtractedSection[],
+    timeMs?: number,
+    meta?: { documentId?: string; documentType?: string; confidence?: number }
+  ) => void
+  updateExtractedSections: (sections: ExtractedSection[]) => void
   resetUpload: () => void
   openViewer: () => void
   closeViewer: () => void
@@ -30,6 +38,9 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   viewerOpen: false,
   extractedSections: [],
   extractionTimeMs: null,
+  documentId: null,
+  documentType: null,
+  documentConfidence: null,
 
   setUploading: (file: File) => {
     const url = URL.createObjectURL(file)
@@ -50,12 +61,23 @@ const useDocumentStore = create<DocumentStore>((set) => ({
     set({ uploadStatus: dragging ? "dragging" : "idle" })
   },
 
-  completeUpload: (sections: ExtractedSection[], timeMs?: number) => {
+  completeUpload: (
+    sections: ExtractedSection[],
+    timeMs?: number,
+    meta?: { documentId?: string; documentType?: string; confidence?: number }
+  ) => {
     set({
       uploadStatus: "done",
       extractedSections: sections,
       extractionTimeMs: timeMs ?? null,
+      documentId: meta?.documentId ?? null,
+      documentType: meta?.documentType ?? null,
+      documentConfidence: meta?.confidence ?? null,
     })
+  },
+
+  updateExtractedSections: (sections: ExtractedSection[]) => {
+    set({ extractedSections: sections })
   },
 
   resetUpload: () => {
@@ -68,6 +90,9 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         filePreviewUrl: null,
         extractedSections: [],
         extractionTimeMs: null,
+        documentId: null,
+        documentType: null,
+        documentConfidence: null,
       }
     })
   },

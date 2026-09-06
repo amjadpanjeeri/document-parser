@@ -1,19 +1,50 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CommandPalette } from "@/components/command-palette"
-import { mockDocuments } from "@/data/documents"
+import type { StoredDocument } from "@/lib/models/document"
+import type { DocStructDocument, DocumentStatus } from "@/lib/types"
 import { DocumentViewer } from "@/modules/documents/document-viewer"
 import { DocumentsView } from "@/modules/documents/documents-view"
 import { Navbar } from "@/modules/documents/navbar"
 import { useDocumentStore } from "@/stores/document-store"
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<"upload" | "documents">(
-    mockDocuments.length === 0 ? "upload" : "documents"
-  )
+  const [activeTab, setActiveTab] = useState<"upload" | "documents">("upload")
   const { viewerOpen, closeViewer } = useDocumentStore()
+  const [documents, setDocuments] = useState<DocStructDocument[]>([])
+  const [_documentsLoading, setDocumentsLoading] = useState(false)
+
+  useEffect(() => {
+    async function loadDocuments() {
+      setDocumentsLoading(true)
+      try {
+        const { listExtractedDocuments } = await import(
+          "@/app/actions/documents"
+        )
+        const docs = await listExtractedDocuments()
+        const mapped: DocStructDocument[] = docs.map((doc: StoredDocument) => ({
+          id: doc._id?.toString() || "",
+          name: doc.filename,
+          type: doc.documentType as DocStructDocument["type"],
+          status: (doc.confidence >= 0.8
+            ? "ready"
+            : "needs_review") as DocumentStatus,
+          uploadedAt: doc.createdAt.toISOString(),
+          confidence: doc.confidence,
+        }))
+        setDocuments(mapped)
+      } catch (err) {
+        console.error("Failed to load documents:", err)
+      } finally {
+        setDocumentsLoading(false)
+      }
+    }
+    if (activeTab === "documents") {
+      loadDocuments()
+    }
+  }, [activeTab])
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
@@ -46,11 +77,11 @@ export default function Page() {
       <Navbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        documentCount={mockDocuments.length}
+        documentCount={documents.length}
       />
       <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <DocumentsView documents={mockDocuments} activeTab={activeTab} />
+          <DocumentsView documents={documents} activeTab={activeTab} />
           <DocumentViewer
             open={viewerOpen}
             onOpenChange={(v) => {

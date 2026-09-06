@@ -6,6 +6,7 @@ import {
   listDocuments,
   type StoredDocument,
   saveDocument,
+  updateDocument,
 } from "@/lib/models/document"
 
 /**
@@ -67,9 +68,32 @@ async function deleteExtractedDocument(
   return deleteDocument(id)
 }
 
+/**
+ * Update a saved document's fields (e.g. after user edits).
+ */
+async function updateExtractedDocument(
+  id: string,
+  data: Partial<{
+    sections: Array<{
+      title: string
+      fields: Array<{
+        key: string
+        label: string
+        value: string | null
+        confidence: number
+      }>
+    }>
+    fields: Record<string, string | null>
+    confidence: number
+  }>
+): Promise<{ success: boolean; error?: string }> {
+  return updateDocument(id, data)
+}
+
 export {
   deleteExtractedDocument,
   getExtractedDocument,
   listExtractedDocuments,
   saveExtractedDocument,
+  updateExtractedDocument,
 }

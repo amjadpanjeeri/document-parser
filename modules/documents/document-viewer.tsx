@@ -1,6 +1,7 @@
 "use client"
 
-import { Download, FileText } from "lucide-react"
+import { CheckCircle2, FileText, Loader2, Save } from "lucide-react"
+import { useCallback, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -30,13 +31,73 @@ function DocumentViewer({
   fileName: fileNameProp,
   sections: sectionsProp,
 }: DocumentViewerProps) {
-  const { uploadedFile, filePreviewUrl, extractedSections, closeViewer } =
-    useDocumentStore()
+  const {
+    uploadedFile,
+    filePreviewUrl,
+    extractedSections,
+    documentId,
+    documentType,
+    documentConfidence,
+    closeViewer,
+  } = useDocumentStore()
+
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  )
 
   const fileName = fileNameProp ?? uploadedFile?.name ?? "document.pdf"
   const fileType = uploadedFile?.type ?? "application/pdf"
   const sections =
     sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
+
+  const handleSave = useCallback(async () => {
+    setSaveStatus("saving")
+    try {
+      const mappedData = {
+        sections: sections.map((s) => ({
+          title: s.title,
+          fields: s.fields.map((f) => ({
+            key: f.key,
+            label: f.label,
+            value: f.value,
+            confidence: f.confidence / 100,
+          })),
+        })),
+        fields: Object.fromEntries(
+          sections.flatMap((s) => s.fields.map((f) => [f.key, f.value]))
+        ),
+      }
+
+      const actions = await import("@/app/actions/documents")
+
+      let result: { success: boolean; error?: string }
+      if (documentId) {
+        // Update existing document
+        result = await actions.updateExtractedDocument(documentId, {
+          ...mappedData,
+          confidence: documentConfidence || 0,
+        })
+      } else {
+        // Save new document
+        result = await actions.saveExtractedDocument({
+          filename: fileName,
+          documentType: documentType || "Other",
+          confidence: documentConfidence || 0,
+          ...mappedData,
+        })
+      }
+
+      if (result.success) {
+        setSaveStatus("saved")
+      } else {
+        console.error("Save failed:", result.error)
+        setSaveStatus("idle")
+      }
+    } catch (err) {
+      console.error("Save error:", err)
+      setSaveStatus("idle")
+    }
+  }, [fileName, documentId, documentType, documentConfidence, sections])
 
   return (
     <Sheet
@@ -75,9 +136,27 @@ function DocumentViewer({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button className="gap-2">
-            <Download className="size-3.5" />
-            Save Document
+          <Button
+            className="gap-2"
+            onClick={handleSave}
+            disabled={saveStatus !== "idle"}
+          >
+            {saveStatus === "saving" ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                Saving...
+              </>
+            ) : saveStatus === "saved" ? (
+              <>
+                <CheckCircle2 className="size-3.5" />
+                Saved!
+              </>
+            ) : (
+              <>
+                <Save className="size-3.5" />
+                Save Document
+              </>
+            )}
           </Button>
         </SheetFooter>
       </SheetContent>
