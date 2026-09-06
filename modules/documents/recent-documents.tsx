@@ -7,19 +7,20 @@ import type { DocStructDocument } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 type RecentDocumentsProps = {
+  /** Up to 3 most recent documents for the landing page. */
   documents?: DocStructDocument[]
   loading?: boolean
-  /** Switch to the Documents tab to see everything. */
-  onViewAll?: () => void
   /** Open a document in the viewer. */
   onOpen?: (doc: DocStructDocument) => void
+  /** Show the link to the documents page. */
+  onViewAll?: () => void
 }
 
 function RecentDocuments({
   documents = [],
   loading = false,
-  onViewAll,
   onOpen,
+  onViewAll,
 }: RecentDocumentsProps) {
   if (!loading && documents.length === 0) {
     return null
@@ -44,7 +45,7 @@ function RecentDocuments({
             className="gap-1.5"
             onClick={onViewAll}
           >
-            View all
+            See all documents
             <ArrowRight className="size-3.5" />
           </Button>
         )}

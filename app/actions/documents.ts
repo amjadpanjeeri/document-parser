@@ -5,7 +5,7 @@ import {
   deleteManyDocuments,
   getDocument,
   listDocuments,
-  type StoredDocument,
+  type SerializableStoredDocument,
   saveDocument,
   updateDocument,
 } from "@/lib/models/document"
@@ -47,7 +47,7 @@ async function saveExtractedDocument(data: {
  */
 async function getExtractedDocument(
   id: string
-): Promise<StoredDocument | null> {
+): Promise<Awaited<ReturnType<typeof getDocument>>> {
   return getDocument(id)
 }
 
@@ -56,7 +56,7 @@ async function getExtractedDocument(
  */
 async function listExtractedDocuments(
   limit?: number
-): Promise<StoredDocument[]> {
+): Promise<SerializableStoredDocument[]> {
   return listDocuments(limit)
 }
 

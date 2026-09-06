@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { toUserMessage } from "@/lib/error-message"
-import type { StoredDocument } from "@/lib/models/document"
+import type {
+  SerializableStoredDocument,
+  StoredSection,
+} from "@/lib/models/document"
 import type {
   DocStructDocument,
   DocumentStatus,
@@ -15,15 +18,15 @@ import { useDocumentStore } from "@/stores/document-store"
 /**
  * Map a stored MongoDB document to the shape the UI listing expects.
  */
-function mapStoredDocument(doc: StoredDocument): DocStructDocument {
+function mapStoredDocument(doc: SerializableStoredDocument): DocStructDocument {
   return {
-    id: doc._id?.toString() || "",
+    id: doc.id,
     name: doc.filename,
     type: doc.documentType as DocStructDocument["type"],
     status: (doc.confidence >= 0.8
       ? "ready"
       : "needs_review") as DocumentStatus,
-    uploadedAt: doc.createdAt.toISOString(),
+    uploadedAt: doc.createdAt,
     confidence: doc.confidence,
   }
 }
@@ -31,9 +34,7 @@ function mapStoredDocument(doc: StoredDocument): DocStructDocument {
 /**
  * Map stored DB sections to the ExtractedSection shape the viewer expects.
  */
-function mapStoredSections(
-  sections: StoredDocument["sections"]
-): ExtractedSection[] {
+function mapStoredSections(sections: StoredSection[]): ExtractedSection[] {
   return (sections || []).map((s) => ({
     title: s.title,
     fields: s.fields.map((f) => ({
@@ -48,8 +49,6 @@ function mapStoredSections(
 }
 
 type UseDocumentsReturn = {
-  activeTab: "upload" | "documents"
-  setActiveTab: (tab: "upload" | "documents") => void
   documents: DocStructDocument[]
   documentsLoading: boolean
   loadDocuments: () => Promise<void>
@@ -64,11 +63,11 @@ type UseDocumentsReturn = {
 }
 
 /**
- * Owns the documents-library tab: which tab is active, the document list,
- * and the load / open / delete flows backed by the server actions.
+ * Owns the documents library state: the full document list, the recent items
+ * shown on the landing page, and the load / open / delete flows backed by the
+ * server actions.
  */
 function useDocuments(): UseDocumentsReturn {
-  const [activeTab, setActiveTab] = useState<"upload" | "documents">("upload")
   const [documents, setDocuments] = useState<DocStructDocument[]>([])
   const [documentsLoading, setDocumentsLoading] = useState(false)
   const [recentDocuments, setRecentDocuments] = useState<DocStructDocument[]>(
@@ -117,14 +116,16 @@ function useDocuments(): UseDocumentsReturn {
     }
   }, [])
 
-  // Landing page (Upload tab) shows recents; Documents tab shows the full list.
+  // Recent documents are the landing page's primary content, so load them
+  // immediately on mount. The full library is loaded separately on the
+  // /documents page.
   useEffect(() => {
-    if (activeTab === "documents") {
-      loadDocuments()
-    } else {
-      loadRecentDocuments()
-    }
-  }, [activeTab, loadDocuments, loadRecentDocuments])
+    loadRecentDocuments()
+  }, [loadRecentDocuments])
+
+  useEffect(() => {
+    loadDocuments()
+  }, [loadDocuments])
 
   // After an upload completes and the viewer closes, the new document is in
   // the DB — refresh whichever lists are visible so it appears immediately.
@@ -135,13 +136,10 @@ function useDocuments(): UseDocumentsReturn {
     if (wasOpen && !viewerOpen && uploadStatus === "done") {
       const timer = setTimeout(() => {
         loadRecentDocuments()
-        if (activeTab === "documents") {
-          loadDocuments()
-        }
       }, 1000)
       return () => clearTimeout(timer)
     }
-  }, [activeTab, viewerOpen, uploadStatus, loadDocuments, loadRecentDocuments])
+  }, [viewerOpen, uploadStatus, loadRecentDocuments])
 
   const openDocument = useCallback(async (doc: DocStructDocument) => {
     try {
@@ -209,8 +207,6 @@ function useDocuments(): UseDocumentsReturn {
   )
 
   return {
-    activeTab,
-    setActiveTab,
     documents,
     documentsLoading,
     loadDocuments,

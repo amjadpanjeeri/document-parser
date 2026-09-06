@@ -1,15 +1,14 @@
 "use client"
 
-import { CommandPalette } from "@/components/command-palette"
 import { useDocuments } from "@/hooks/use-documents"
 import { DocumentViewer } from "@/modules/documents/document-viewer"
-import { LandingView } from "@/modules/documents/landing-view"
+import { LibraryView } from "@/modules/documents/library-view"
 import { Navbar } from "@/modules/documents/navbar"
 import { useDocumentStore } from "@/stores/document-store"
 
-export default function Page() {
+export default function DocumentsPage() {
   const { viewerOpen, closeViewer } = useDocumentStore()
-  const { recentDocuments, recentDocumentsLoading, openDocument } =
+  const { documents, documentsLoading, openDocument, deleteDocuments } =
     useDocuments()
 
   return (
@@ -39,14 +38,14 @@ export default function Page() {
         <div className="absolute bottom-48 right-[12%] size-1 rounded-full bg-violet-500/15" />
       </div>
 
-      <CommandPalette />
       <Navbar />
       <main className="flex-1 px-4 py-4 md:px-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl">
-          <LandingView
-            recentDocuments={recentDocuments}
-            recentDocumentsLoading={recentDocumentsLoading}
+          <LibraryView
+            documents={documents}
+            documentsLoading={documentsLoading}
             onOpenDocument={openDocument}
+            onDeleteDocuments={deleteDocuments}
           />
           <DocumentViewer
             open={viewerOpen}

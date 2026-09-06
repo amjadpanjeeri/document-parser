@@ -37,6 +37,63 @@ type StoredDocument = {
   updatedAt: Date
 }
 
+type SerializableStoredDocument = {
+  id: string
+  filename: string
+  documentType: string
+  confidence: number
+  sections: StoredSection[]
+  fields: Record<string, string | null>
+  summary?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type { SerializableStoredDocument }
+
+function tryToIso(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+  if (typeof value === "string") {
+    return value
+  }
+  return ""
+}
+
+function serializeStoredDocument(
+  doc: StoredDocument
+): SerializableStoredDocument {
+  const id =
+    doc._id instanceof ObjectId
+      ? doc._id.toHexString()
+      : typeof doc._id === "string"
+        ? doc._id
+        : String(doc._id ?? "")
+
+  return {
+    id,
+    filename: doc.filename,
+    documentType: doc.documentType,
+    confidence: doc.confidence,
+    sections: doc.sections,
+    fields: doc.fields,
+    summary: doc.summary ?? undefined,
+    createdAt:
+      doc.createdAt instanceof Date
+        ? doc.createdAt.toISOString()
+        : typeof doc.createdAt === "string"
+          ? doc.createdAt
+          : String(doc.createdAt ?? ""),
+    updatedAt:
+      doc.updatedAt instanceof Date
+        ? doc.updatedAt.toISOString()
+        : typeof doc.updatedAt === "string"
+          ? doc.updatedAt
+          : String(doc.updatedAt ?? ""),
+  }
+}
+
 const COLLECTION_NAME = "documents"
 
 /**
@@ -78,7 +135,9 @@ async function saveDocument(
 /**
  * Get a document by its ID.
  */
-async function getDocument(id: string): Promise<StoredDocument | null> {
+async function getDocument(
+  id: string
+): Promise<SerializableStoredDocument | null> {
   try {
     const connection = await connectToDatabase()
     if (!connection) return null
@@ -88,7 +147,8 @@ async function getDocument(id: string): Promise<StoredDocument | null> {
       .collection(COLLECTION_NAME)
       .findOne({ _id: new ObjectId(id) })
 
-    return doc as StoredDocument | null
+    if (!doc) return null
+    return serializeStoredDocument(doc as StoredDocument)
   } catch (error) {
     console.error("[DB] Get error:", error)
     return null
@@ -98,7 +158,9 @@ async function getDocument(id: string): Promise<StoredDocument | null> {
 /**
  * List all documents, newest first.
  */
-async function listDocuments(limit = 50): Promise<StoredDocument[]> {
+async function listDocuments(
+  limit = 50
+): Promise<SerializableStoredDocument[]> {
   try {
     const connection = await connectToDatabase()
     if (!connection) return []
@@ -111,7 +173,7 @@ async function listDocuments(limit = 50): Promise<StoredDocument[]> {
       .limit(limit)
       .toArray()
 
-    return docs as StoredDocument[]
+    return (docs as StoredDocument[]).map(serializeStoredDocument)
   } catch (error) {
     console.error("[DB] List error:", error)
     return []
