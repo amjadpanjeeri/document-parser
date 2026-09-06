@@ -19,6 +19,19 @@ import { useDocumentStore } from "@/stores/document-store"
  * Map a stored MongoDB document to the shape the UI listing expects.
  */
 function mapStoredDocument(doc: SerializableStoredDocument): DocStructDocument {
+  const searchText = [
+    doc.filename,
+    doc.documentType,
+    doc.summary,
+    ...Object.entries(doc.fields).flat(),
+    ...doc.sections.flatMap((section) => [
+      section.title,
+      ...section.fields.flatMap((field) => [field.label, field.value ?? ""]),
+    ]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+
   return {
     id: doc.id,
     name: doc.filename,
@@ -28,6 +41,7 @@ function mapStoredDocument(doc: SerializableStoredDocument): DocStructDocument {
       : "needs_review") as DocumentStatus,
     uploadedAt: doc.createdAt,
     confidence: doc.confidence,
+    searchText,
   }
 }
 

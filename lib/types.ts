@@ -17,6 +17,7 @@ export interface DocStructDocument {
   uploadedAt: string
   confidence?: number
   thumbnailUrl?: string
+  searchText?: string
 }
 
 export type ExtractedField = {
