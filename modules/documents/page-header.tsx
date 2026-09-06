@@ -15,12 +15,29 @@ type PageHeaderProps = {
   totalCount: number
   viewMode: "grid" | "list"
   onViewModeChange: (mode: "grid" | "list") => void
+  sort?: string
+  filter?: string
+  onSortChange?: (sort: string) => void
+  onFilterChange?: (filter: string) => void
+}
+
+const filterLabels: Record<string, string> = {
+  all: "Filter",
+  Invoice: "Invoices",
+  Contract: "Contracts",
+  Resume: "Resumes",
+  Report: "Reports",
+  Receipt: "Receipts",
 }
 
 function PageHeader({
   totalCount,
   viewMode,
   onViewModeChange,
+  sort = "date-desc",
+  filter = "all",
+  onSortChange = () => {},
+  onFilterChange = () => {},
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -39,15 +56,33 @@ function PageHeader({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1.5">
               <ArrowUpDown className="size-3.5" />
-              Sort
+              {sort === "date-desc"
+                ? "Newest"
+                : sort === "date-asc"
+                  ? "Oldest"
+                  : sort === "name-asc"
+                    ? "Name A-Z"
+                    : sort === "name-desc"
+                      ? "Name Z-A"
+                      : "Sort"}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Date (newest)</DropdownMenuItem>
-            <DropdownMenuItem>Date (oldest)</DropdownMenuItem>
-            <DropdownMenuItem>Name (A–Z)</DropdownMenuItem>
-            <DropdownMenuItem>Name (Z–A)</DropdownMenuItem>
-            <DropdownMenuItem>Status</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSortChange("date-desc")}>
+              Date (newest)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSortChange("date-asc")}>
+              Date (oldest)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSortChange("name-asc")}>
+              Name (A-Z)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSortChange("name-desc")}>
+              Name (Z-A)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSortChange("status")}>
+              Status
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -56,16 +91,28 @@ function PageHeader({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1.5">
               <SlidersHorizontal className="size-3.5" />
-              Filter
+              {filterLabels[filter] ?? filter}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>All types</DropdownMenuItem>
-            <DropdownMenuItem>Invoices</DropdownMenuItem>
-            <DropdownMenuItem>Contracts</DropdownMenuItem>
-            <DropdownMenuItem>Resumes</DropdownMenuItem>
-            <DropdownMenuItem>Reports</DropdownMenuItem>
-            <DropdownMenuItem>Receipts</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("all")}>
+              All types
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("Invoice")}>
+              Invoices
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("Contract")}>
+              Contracts
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("Resume")}>
+              Resumes
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("Report")}>
+              Reports
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onFilterChange("Receipt")}>
+              Receipts
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -75,7 +122,7 @@ function PageHeader({
             type="button"
             onClick={() => onViewModeChange("grid")}
             className={cn(
-              "flex size-8 items-center justify-center rounded-l-lg transition-colors",
+              "flex size-7 items-center justify-center rounded-l-lg transition-colors",
               viewMode === "grid"
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -87,7 +134,7 @@ function PageHeader({
             type="button"
             onClick={() => onViewModeChange("list")}
             className={cn(
-              "flex size-8 items-center justify-center rounded-r-lg border-l border-border transition-colors",
+              "flex size-7 items-center justify-center rounded-r-lg border-l border-border transition-colors",
               viewMode === "list"
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"

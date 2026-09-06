@@ -29,6 +29,18 @@ type LibraryViewProps = {
   onRenameDocument?: (id: string, filename: string) => Promise<boolean>
 }
 
+function matchesDocumentType(documentType: string, selectedType: string) {
+  if (selectedType === "all") return true
+
+  const normalizedDocumentType = documentType.trim().toLowerCase()
+  const normalizedSelectedType = selectedType.trim().toLowerCase()
+
+  return (
+    normalizedDocumentType === normalizedSelectedType ||
+    normalizedDocumentType.startsWith(`${normalizedSelectedType} `)
+  )
+}
+
 export function LibraryView({
   documents = [],
   documentsLoading = false,
@@ -39,6 +51,8 @@ export function LibraryView({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [query, setQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
+  const [sort, setSort] = useState("date-desc")
+  const [filter, setFilter] = useState("all")
   const [aiResultIds, setAiResultIds] = useState<string[] | null>(null)
   const [aiAnswer, setAiAnswer] = useState("")
   const [aiSearching, setAiSearching] = useState(false)
@@ -80,9 +94,22 @@ export function LibraryView({
         )
       )
     : documents
-  const filteredDocuments = aiResultIds
+  const searchedDocuments = aiResultIds
     ? documents.filter((doc) => aiResultIds.includes(doc.id))
     : keywordDocuments
+  const filteredDocuments = searchedDocuments
+    .filter((doc) => matchesDocumentType(doc.type, filter))
+    .sort((first, second) => {
+      if (sort === "name-asc") return first.name.localeCompare(second.name)
+      if (sort === "name-desc") return second.name.localeCompare(first.name)
+      if (sort === "status") return first.status.localeCompare(second.status)
+
+      const firstDate = Date.parse(first.uploadedAt)
+      const secondDate = Date.parse(second.uploadedAt)
+      return sort === "date-asc"
+        ? firstDate - secondDate
+        : secondDate - firstDate
+    })
   const filteredIds = filteredDocuments.map((doc) => doc.id)
   const selection = selectedIds.filter((id) => filteredIds.includes(id))
   const selectedCount = selection.length
@@ -181,6 +208,10 @@ export function LibraryView({
         totalCount={filteredDocuments.length}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        sort={sort}
+        filter={filter}
+        onSortChange={setSort}
+        onFilterChange={setFilter}
       />
 
       <div className="relative">

@@ -59,10 +59,15 @@ function DocumentCardGrid({
           <p className="truncate font-medium text-sm">{document.name}</p>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge
+              variant="secondary"
+              className="text-xs font-medium capitalize"
+            >
               {document.type}
             </Badge>
-            <Badge className={cn("text-[10px]", statusClassName)}>
+            <Badge
+              className={cn("text-xs font-medium capitalize", statusClassName)}
+            >
               {statusLabel}
             </Badge>
           </div>

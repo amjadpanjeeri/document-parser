@@ -69,7 +69,7 @@ function DocumentCardList({
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-sm">{document.name}</p>
           <div className="mt-0.5 flex items-center gap-2 text-muted-foreground text-xs">
-            <span>{document.type}</span>
+            <span className="capitalize">{document.type}</span>
             <span>·</span>
             <span>{document.uploadedAt}</span>
           </div>
@@ -77,7 +77,12 @@ function DocumentCardList({
       </button>
 
       {/* Status */}
-      <Badge className={cn("hidden shrink-0 sm:inline-flex", statusClassName)}>
+      <Badge
+        className={cn(
+          "hidden shrink-0 text-xs font-medium sm:inline-flex",
+          statusClassName
+        )}
+      >
         {statusLabel}
       </Badge>
 
