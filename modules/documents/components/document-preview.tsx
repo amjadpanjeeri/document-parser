@@ -47,7 +47,7 @@ function DocumentPreview({
   }, [])
 
   return (
-    <div className="flex min-h-0 flex-col border-b border-border bg-muted/30 md:w-1/2 md:border-b-0 md:border-r md:flex-none">
+    <div className="flex min-h-[28rem] flex-none flex-col border-b border-border bg-muted/30 md:h-full md:min-h-0 md:w-1/2 md:flex-1 md:border-b-0 md:border-r md:flex-none">
       <div className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-4 sm:py-2.5">
         <span className="hidden text-muted-foreground text-xs font-medium uppercase tracking-wider sm:inline">
           Document Preview
@@ -99,7 +99,7 @@ function DocumentPreview({
       </div>
       <div className="flex flex-1 items-center justify-center overflow-auto p-3 sm:p-6">
         <div
-          className="flex items-center justify-center transition-transform duration-200"
+          className="flex w-full items-center justify-center transition-transform duration-200"
           style={{
             transform: `rotate(${rotation}deg) scale(${zoom})`,
           }}
@@ -116,7 +116,7 @@ function DocumentPreview({
               <iframe
                 src={filePreviewUrl}
                 title={fileName}
-                className="h-full min-h-[400px] w-full rounded-lg border border-border bg-background"
+                className="h-[60vh] min-h-[400px] w-full rounded-lg border border-border bg-background md:h-[calc(100vh-12rem)]"
               />
             ) : (
               <div className="flex flex-col items-center gap-3">
@@ -126,7 +126,8 @@ function DocumentPreview({
                 <div className="text-center">
                   <p className="font-medium text-sm">{fileName}</p>
                   <p className="mt-1 text-muted-foreground text-xs">
-                    Preview not available for {fileType.toUpperCase()}
+                    Preview not available for {fileType.toUpperCase()}.
+                    Re-upload the file to view it here.
                   </p>
                 </div>
               </div>
