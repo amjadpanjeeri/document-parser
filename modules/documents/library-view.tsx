@@ -1,23 +1,17 @@
 "use client"
 
-import { Loader2, Search, Sparkles, X } from "lucide-react"
+import { Loader2, Sparkles } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import type { DocStructDocument } from "@/lib/types"
 import { DeleteDialog } from "./delete-dialog"
-import { DocumentCard } from "./document-card"
 import { EmptyState } from "./empty-state"
+import { LibraryRenameDialog } from "./library-rename-dialog"
+import { LibraryResults } from "./library-results"
+import { LibrarySearch } from "./library-search"
+import { getFilteredDocuments } from "./library-utils"
 import { PageHeader } from "./page-header"
 import { SelectionBar } from "./selection-bar"
 
@@ -27,18 +21,6 @@ type LibraryViewProps = {
   onOpenDocument?: (doc: DocStructDocument) => void
   onDeleteDocuments?: (ids: string[]) => Promise<boolean>
   onRenameDocument?: (id: string, filename: string) => Promise<boolean>
-}
-
-function matchesDocumentType(documentType: string, selectedType: string) {
-  if (selectedType === "all") return true
-
-  const normalizedDocumentType = documentType.trim().toLowerCase()
-  const normalizedSelectedType = selectedType.trim().toLowerCase()
-
-  return (
-    normalizedDocumentType === normalizedSelectedType ||
-    normalizedDocumentType.startsWith(`${normalizedSelectedType} `)
-  )
 }
 
 export function LibraryView({
@@ -82,43 +64,24 @@ export function LibraryView({
     return <EmptyState />
   }
 
-  const searchTerms = debouncedQuery
-    .toLowerCase()
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-  const keywordDocuments = searchTerms.length
-    ? documents.filter((doc) =>
-        searchTerms.every((term) =>
-          doc.searchText?.toLowerCase().includes(term)
-        )
-      )
-    : documents
-  const searchedDocuments = aiResultIds
-    ? documents.filter((doc) => aiResultIds.includes(doc.id))
-    : keywordDocuments
-  const filteredDocuments = searchedDocuments
-    .filter((doc) => matchesDocumentType(doc.type, filter))
-    .sort((first, second) => {
-      if (sort === "name-asc") return first.name.localeCompare(second.name)
-      if (sort === "name-desc") return second.name.localeCompare(first.name)
-      if (sort === "status") return first.status.localeCompare(second.status)
-
-      const firstDate = Date.parse(first.uploadedAt)
-      const secondDate = Date.parse(second.uploadedAt)
-      return sort === "date-asc"
-        ? firstDate - secondDate
-        : secondDate - firstDate
-    })
-  const filteredIds = filteredDocuments.map((doc) => doc.id)
+  const filteredDocuments = getFilteredDocuments(
+    documents,
+    debouncedQuery,
+    aiResultIds,
+    filter,
+    sort
+  )
+  const filteredIds = filteredDocuments.map((document) => document.id)
   const selection = selectedIds.filter((id) => filteredIds.includes(id))
   const selectedCount = selection.length
   const allSelected =
     filteredDocuments.length > 0 && selectedCount === filteredDocuments.length
 
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((selId) => selId !== id) : [...prev, id]
+    setSelectedIds((previous) =>
+      previous.includes(id)
+        ? previous.filter((selectedId) => selectedId !== id)
+        : [...previous, id]
     )
   }
 
@@ -130,6 +93,19 @@ export function LibraryView({
 
   const requestDelete = (ids: string[]) => setDeleteTarget(ids)
 
+  const confirmDelete = async () => {
+    if (!deleteTarget || !onDeleteDocuments) {
+      setDeleteTarget(null)
+      return
+    }
+
+    setDeleting(true)
+    const deleted = await onDeleteDocuments(deleteTarget)
+    setDeleting(false)
+    setDeleteTarget(null)
+    if (deleted) clearSelection()
+  }
+
   const requestRename = (id: string) => {
     const document = documents.find((item) => item.id === id)
     if (!document) return
@@ -139,6 +115,7 @@ export function LibraryView({
 
   const confirmRename = async () => {
     if (!renameTarget || !onRenameDocument || !renameValue.trim()) return
+
     setRenaming(true)
     try {
       await onRenameDocument(renameTarget.id, renameValue.trim())
@@ -156,6 +133,7 @@ export function LibraryView({
 
   const searchWithAi = async () => {
     if (!query.trim()) return
+
     setAiSearching(true)
     try {
       const response = await fetch("/api/search", {
@@ -184,22 +162,17 @@ export function LibraryView({
     }
   }
 
-  const confirmDelete = async () => {
-    if (!deleteTarget || !onDeleteDocuments) {
-      setDeleteTarget(null)
-      return
-    }
-    setDeleting(true)
-    const ok = await onDeleteDocuments(deleteTarget)
-    setDeleting(false)
-    setDeleteTarget(null)
-    if (ok) clearSelection()
+  const clearSearch = () => {
+    setQuery("")
+    setDebouncedQuery("")
+    setAiResultIds(null)
+    setAiAnswer("")
   }
 
   const deleteTargetNames = deleteTarget
     ? documents
-        .filter((doc) => deleteTarget.includes(doc.id))
-        .map((doc) => doc.name)
+        .filter((document) => deleteTarget.includes(document.id))
+        .map((document) => document.name)
     : []
 
   return (
@@ -214,53 +187,17 @@ export function LibraryView({
         onFilterChange={setFilter}
       />
 
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value)
-            setAiResultIds(null)
-            setAiAnswer("")
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") searchWithAi()
-          }}
-          placeholder="Search or ask about your documents..."
-          className="h-10 pl-9 pr-24"
-          aria-label="Search documents and extracted fields"
-        />
-        <div className="absolute top-1/2 right-1 flex -translate-y-1/2 gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={searchWithAi}
-            disabled={!query.trim() || aiSearching}
-            aria-label="Search with AI"
-            title="Search with AI"
-          >
-            {aiSearching ? <Loader2 className="animate-spin" /> : <Sparkles />}
-          </Button>
-          {query && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => {
-                setQuery("")
-                setDebouncedQuery("")
-                setAiResultIds(null)
-                setAiAnswer("")
-              }}
-              aria-label="Clear document search"
-            >
-              <X />
-            </Button>
-          )}
-        </div>
-      </div>
+      <LibrarySearch
+        query={query}
+        aiSearching={aiSearching}
+        onQueryChange={(nextQuery) => {
+          setQuery(nextQuery)
+          setAiResultIds(null)
+          setAiAnswer("")
+        }}
+        onSearchWithAi={searchWithAi}
+        onClear={clearSearch}
+      />
 
       {aiAnswer && (
         <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
@@ -279,49 +216,16 @@ export function LibraryView({
         />
       )}
 
-      {filteredDocuments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-          <Search className="size-6 text-muted-foreground" />
-          <p className="font-medium text-sm">
-            {aiResultIds
-              ? "AI found no matching documents"
-              : "No matching documents"}
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Try a filename, field label, or extracted value.
-          </p>
-        </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredDocuments.map((doc) => (
-            <DocumentCard
-              key={doc.id}
-              document={doc}
-              viewMode="grid"
-              onClick={() => onOpenDocument?.(doc)}
-              selected={selectedIds.includes(doc.id)}
-              onToggleSelect={toggleSelect}
-              onDelete={(id) => requestDelete([id])}
-              onRename={requestRename}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filteredDocuments.map((doc) => (
-            <DocumentCard
-              key={doc.id}
-              document={doc}
-              viewMode="list"
-              onClick={() => onOpenDocument?.(doc)}
-              selected={selectedIds.includes(doc.id)}
-              onToggleSelect={toggleSelect}
-              onDelete={(id) => requestDelete([id])}
-              onRename={requestRename}
-            />
-          ))}
-        </div>
-      )}
+      <LibraryResults
+        documents={filteredDocuments}
+        viewMode={viewMode}
+        selectedIds={selectedIds}
+        hasAiResults={aiResultIds !== null}
+        onOpenDocument={onOpenDocument}
+        onToggleSelect={toggleSelect}
+        onDelete={(id) => requestDelete([id])}
+        onRename={requestRename}
+      />
 
       <DeleteDialog
         open={deleteTarget !== null}
@@ -331,48 +235,14 @@ export function LibraryView({
         onConfirm={confirmDelete}
       />
 
-      <Dialog
+      <LibraryRenameDialog
         open={renameTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !renaming) setRenameTarget(null)
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit filename</DialogTitle>
-            <DialogDescription>
-              Update the name shown in your document library.
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            value={renameValue}
-            onChange={(event) => setRenameValue(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") confirmRename()
-            }}
-            maxLength={255}
-            autoFocus
-            aria-label="Document filename"
-          />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setRenameTarget(null)}
-              disabled={renaming}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmRename}
-              disabled={renaming || !renameValue.trim()}
-            >
-              {renaming ? "Saving..." : "Save name"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        value={renameValue}
+        saving={renaming}
+        onValueChange={setRenameValue}
+        onClose={() => setRenameTarget(null)}
+        onConfirm={confirmRename}
+      />
     </div>
   )
 }
