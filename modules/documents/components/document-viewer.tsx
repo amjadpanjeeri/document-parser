@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -49,6 +50,7 @@ function DocumentViewer({
     filePreviewUrl,
     extractedSections,
     documentId,
+    documentType,
     savedFileName,
     closeViewer,
     setSavedFileName,
@@ -286,7 +288,14 @@ function DocumentViewer({
                   )}
                 </Button>
               </div>
-              <SheetDescription>Parsed document data</SheetDescription>
+              <div className="flex items-center gap-2">
+                <SheetDescription>Parsed document data</SheetDescription>
+                {documentType && (
+                  <Badge variant="secondary" className="max-w-40 truncate">
+                    {documentType}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </SheetHeader>
