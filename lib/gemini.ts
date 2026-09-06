@@ -12,13 +12,14 @@ const genAI = new GoogleGenerativeAI(apiKey)
 
 /**
  * The Gemini Flash model used for document extraction.
- * gemini-2.5-flash: fast, cost-effective extraction with good quality.
+ * gemini-3.5-flash-lite: fastest, most cost-effective 3.x model.
  */
 const model = genAI.getGenerativeModel({
-  model: "gemini-3.6-flash",
+  model: "gemini-3.5-flash-lite",
   generationConfig: {
-    temperature: 0.1,
-    maxOutputTokens: 8192,
+    temperature: 0,
+    maxOutputTokens: 4096,
+    responseMimeType: "application/json",
   },
 })
 
