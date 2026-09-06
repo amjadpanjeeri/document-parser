@@ -51,16 +51,6 @@ type SerializableStoredDocument = {
 
 export type { SerializableStoredDocument }
 
-function tryToIso(value: unknown): string {
-  if (value instanceof Date) {
-    return value.toISOString()
-  }
-  if (typeof value === "string") {
-    return value
-  }
-  return ""
-}
-
 function serializeStoredDocument(
   doc: StoredDocument
 ): SerializableStoredDocument {
@@ -261,12 +251,55 @@ async function updateDocument(
   }
 }
 
+/**
+ * Rename a saved document without changing its extracted data.
+ */
+async function renameDocument(
+  id: string,
+  filename: string
+): Promise<{ success: boolean; error?: string }> {
+  const trimmedFilename = filename.trim()
+  if (!trimmedFilename) {
+    return { success: false, error: "Filename cannot be empty" }
+  }
+  if (trimmedFilename.length > 255) {
+    return { success: false, error: "Filename cannot exceed 255 characters" }
+  }
+
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { success: false, error: "Database unavailable" }
+    }
+
+    const result = await connection.db
+      .collection(COLLECTION_NAME)
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { filename: trimmedFilename, updatedAt: new Date() } }
+      )
+
+    if (result.matchedCount === 0) {
+      return { success: false, error: "Document not found" }
+    }
+
+    console.log("[DB] Document renamed:", id, trimmedFilename)
+    return { success: true }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to rename document"
+    console.error("[DB] Rename error:", message)
+    return { success: false, error: message }
+  }
+}
+
 export type { StoredDocument, StoredField, StoredSection }
 export {
   deleteDocument,
   deleteManyDocuments,
   getDocument,
   listDocuments,
+  renameDocument,
   saveDocument,
   updateDocument,
 }

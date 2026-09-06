@@ -1,10 +1,18 @@
 "use client"
 
-import { CheckCircle2, FileText, Loader2, Save } from "lucide-react"
-import { useCallback, useState } from "react"
+import {
+  Check,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Pencil,
+  Save,
+} from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Sheet,
   SheetContent,
@@ -37,21 +45,75 @@ function DocumentViewer({
 }: DocumentViewerProps) {
   const {
     uploadedFile,
+    fileNameOverride,
     filePreviewUrl,
     extractedSections,
+    documentId,
     savedFileName,
     closeViewer,
+    setSavedFileName,
   } = useDocumentStore()
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   )
+  const [editableFileName, setEditableFileName] = useState("")
+  const [renameStatus, setRenameStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  )
+  const [isEditingFileName, setIsEditingFileName] = useState(false)
 
   const fileName =
-    fileNameProp ?? savedFileName ?? uploadedFile?.name ?? "document.pdf"
+    fileNameProp ??
+    savedFileName ??
+    fileNameOverride ??
+    uploadedFile?.name ??
+    "document.pdf"
   const fileType = uploadedFile?.type ?? "application/pdf"
   const sections =
     sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
+
+  useEffect(() => {
+    setEditableFileName(fileName)
+    setRenameStatus("idle")
+    setIsEditingFileName(false)
+  }, [fileName])
+
+  const renameSavedDocument = useCallback(async () => {
+    const nextFileName = editableFileName.trim()
+    const state = useDocumentStore.getState()
+    if (!nextFileName || nextFileName === fileName || !state.documentId) return
+
+    setRenameStatus("saving")
+    try {
+      const response = await fetch(`/api/documents/${state.documentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: nextFileName }),
+      })
+      const result = (await response.json()) as {
+        success?: boolean
+        error?: string
+      }
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Rename failed")
+      }
+      setEditableFileName(nextFileName)
+      setSavedFileName(nextFileName)
+      setRenameStatus("saved")
+      setIsEditingFileName(false)
+      toast.success("Filename updated")
+      setTimeout(() => setRenameStatus("idle"), 1200)
+    } catch (error) {
+      setRenameStatus("idle")
+      toast.error("Couldn't rename the document", {
+        description: toUserMessage(
+          error instanceof Error ? error.message : null,
+          "The filename wasn't updated. Please try again."
+        ),
+      })
+    }
+  }, [editableFileName, fileName, setSavedFileName])
 
   const handleSave = useCallback(async () => {
     setSaveStatus("saving")
@@ -76,9 +138,29 @@ function DocumentViewer({
 
       const state = useDocumentStore.getState()
       const actions = await import("@/app/actions/documents")
+      const nextFileName = editableFileName.trim() || fileName
 
       let result: { success: boolean; error?: string }
       if (state.documentId) {
+        if (nextFileName !== fileName) {
+          const renameResponse = await fetch(
+            `/api/documents/${state.documentId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ filename: nextFileName }),
+            }
+          )
+          const renameResult = (await renameResponse.json()) as {
+            success?: boolean
+            error?: string
+          }
+          if (!renameResponse.ok || !renameResult.success) {
+            throw new Error(renameResult.error || "Filename update failed")
+          }
+          setSavedFileName(nextFileName)
+        }
+
         // Update existing document
         result = await actions.updateExtractedDocument(state.documentId, {
           ...mappedData,
@@ -87,7 +169,7 @@ function DocumentViewer({
       } else {
         // Save new document
         result = await actions.saveExtractedDocument({
-          filename: fileName,
+          filename: nextFileName,
           documentType: state.documentType || "Other",
           confidence: state.documentConfidence || 0,
           ...mappedData,
@@ -100,7 +182,7 @@ function DocumentViewer({
         toast.success(isUpdate ? "Document updated" : "Document saved", {
           description: isUpdate
             ? "Your edits have been saved to the document."
-            : `${fileName} has been added to your library.`,
+            : `${nextFileName} has been added to your library.`,
         })
         setTimeout(() => {
           closeViewer()
@@ -125,7 +207,7 @@ function DocumentViewer({
       })
       setSaveStatus("idle")
     }
-  }, [fileName, closeViewer])
+  }, [editableFileName, closeViewer, fileName, setSavedFileName])
 
   return (
     <Sheet
@@ -144,8 +226,66 @@ function DocumentViewer({
             <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
               <FileText className="size-5 text-primary" />
             </div>
-            <div className="min-w-0">
-              <SheetTitle className="truncate">{fileName}</SheetTitle>
+            <div className="min-w-0 flex-1">
+              <SheetTitle className="sr-only">Document filename</SheetTitle>
+              <div className="flex items-center gap-2">
+                {isEditingFileName ? (
+                  <Input
+                    value={editableFileName}
+                    onChange={(event) =>
+                      setEditableFileName(event.target.value)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        if (documentId) renameSavedDocument()
+                        else setIsEditingFileName(false)
+                      }
+                    }}
+                    aria-label="Document filename"
+                    className="h-8 w-64 max-w-[60vw] font-heading text-base"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="block max-w-[min(60vw,16rem)] truncate font-heading text-base"
+                    title={editableFileName}
+                  >
+                    {editableFileName}
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    if (!isEditingFileName) {
+                      setIsEditingFileName(true)
+                    } else if (documentId) {
+                      renameSavedDocument()
+                    } else {
+                      setIsEditingFileName(false)
+                    }
+                  }}
+                  disabled={
+                    renameStatus === "saving" ||
+                    (isEditingFileName && !editableFileName.trim())
+                  }
+                  aria-label={
+                    isEditingFileName ? "Save filename" : "Edit filename"
+                  }
+                  title={isEditingFileName ? "Save filename" : "Edit filename"}
+                >
+                  {renameStatus === "saving" ? (
+                    <Loader2 className="animate-spin" />
+                  ) : renameStatus === "saved" ? (
+                    <Check />
+                  ) : isEditingFileName ? (
+                    <Check />
+                  ) : (
+                    <Pencil />
+                  )}
+                </Button>
+              </div>
               <SheetDescription>Parsed document data</SheetDescription>
             </div>
           </div>

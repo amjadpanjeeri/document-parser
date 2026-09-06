@@ -36,9 +36,13 @@ function UploadZone() {
     completeUpload,
     openViewer,
   } = useDocumentStore()
+  const setFileNameOverride = useDocumentStore(
+    (state) => state.setFileNameOverride
+  )
   const { extract } = useExtract()
   const [elapsed, setElapsed] = useState(0)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [pendingFileName, setPendingFileName] = useState("")
   const [comments, setComments] = useState("")
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -65,6 +69,7 @@ function UploadZone() {
     async (file: File, userComments: string) => {
       setPendingFile(null)
       setComments("")
+      setFileNameOverride(pendingFileName)
       setUploading(file)
 
       const startTime = Date.now()
@@ -100,6 +105,8 @@ function UploadZone() {
       completeUpload,
       openViewer,
       resetUpload,
+      setFileNameOverride,
+      pendingFileName,
     ]
   )
 
@@ -107,6 +114,7 @@ function UploadZone() {
     const file = acceptedFiles[0]
     if (!file) return
     setPendingFile(file)
+    setPendingFileName(file.name)
   }, [])
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -238,6 +246,7 @@ function UploadZone() {
           if (!open && uploadStatus !== "uploading") {
             setPendingFile(null)
             setComments("")
+            setPendingFileName("")
           }
         }}
       >
@@ -252,6 +261,20 @@ function UploadZone() {
               document. It will use your notes when inferring values.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex flex-col gap-2">
+            <label className="font-medium text-sm" htmlFor="document-filename">
+              Filename
+            </label>
+            <input
+              id="document-filename"
+              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              value={pendingFileName}
+              onChange={(event) => setPendingFileName(event.target.value)}
+              maxLength={255}
+              autoFocus
+            />
+          </div>
 
           <div className="flex flex-col gap-2">
             <label
@@ -270,7 +293,6 @@ function UploadZone() {
               onChange={(event) => setComments(event.target.value)}
               placeholder="Example: The invoice total includes tax; vendor ID is near the footer."
               maxLength={2000}
-              autoFocus
             />
             <p className="text-muted-foreground text-xs">
               {comments.length}/2000
@@ -284,6 +306,7 @@ function UploadZone() {
               onClick={() => {
                 setPendingFile(null)
                 setComments("")
+                setPendingFileName("")
               }}
             >
               Cancel

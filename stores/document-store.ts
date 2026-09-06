@@ -8,6 +8,7 @@ type DocumentStore = {
   uploadStatus: UploadStatus
   statusMessage: string
   uploadedFile: File | null
+  fileNameOverride: string | null
   filePreviewUrl: string | null
   viewerOpen: boolean
   extractedSections: ExtractedSection[]
@@ -22,6 +23,7 @@ type DocumentStore = {
 
   setUploading: (file: File) => void
   setStatusMessage: (message: string) => void
+  setFileNameOverride: (fileName: string) => void
   setDragging: (dragging: boolean) => void
   completeUpload: (
     sections: ExtractedSection[],
@@ -29,6 +31,7 @@ type DocumentStore = {
     meta?: { documentId?: string; documentType?: string; confidence?: number }
   ) => void
   updateExtractedSections: (sections: ExtractedSection[]) => void
+  setSavedFileName: (fileName: string) => void
   /** Update a single field's value across all sections */
   updateFieldValue: (key: string, value: string) => void
   resetUpload: () => void
@@ -48,6 +51,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   uploadStatus: "idle",
   statusMessage: "",
   uploadedFile: null,
+  fileNameOverride: null,
   filePreviewUrl: null,
   viewerOpen: false,
   extractedSections: [],
@@ -73,6 +77,10 @@ const useDocumentStore = create<DocumentStore>((set) => ({
     set({ statusMessage: message })
   },
 
+  setFileNameOverride: (fileName: string) => {
+    set({ fileNameOverride: fileName.trim() || null })
+  },
+
   setDragging: (dragging: boolean) => {
     set({ uploadStatus: dragging ? "dragging" : "idle" })
   },
@@ -96,6 +104,10 @@ const useDocumentStore = create<DocumentStore>((set) => ({
     set({ extractedSections: sections })
   },
 
+  setSavedFileName: (fileName: string) => {
+    set({ savedFileName: fileName })
+  },
+
   updateFieldValue: (key: string, value: string) => {
     set((state) => ({
       extractedSections: state.extractedSections.map((section) => ({
@@ -114,6 +126,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         uploadStatus: "idle",
         statusMessage: "",
         uploadedFile: null,
+        fileNameOverride: null,
         filePreviewUrl: null,
         extractedSections: [],
         extractionTimeMs: null,
