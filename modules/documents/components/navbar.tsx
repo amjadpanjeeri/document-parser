@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
@@ -30,7 +30,16 @@ function Navbar() {
           className="flex items-center gap-2 text-foreground transition-colors hover:text-primary"
         >
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="size-4" />
+            <svg viewBox="0 0 64 64" aria-hidden="true" className="size-6">
+              <path d="M18 12h20l10 10v30H18z" fill="white" />
+              <path d="M38 12v12h12" fill="#bfdbfe" />
+              <path
+                d="M25 34h16M25 42h12"
+                stroke="#2563eb"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
           <span className="hidden font-semibold text-base sm:inline-block">
             DocStruct
