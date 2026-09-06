@@ -221,7 +221,7 @@ function DocumentViewer({
     >
       <SheetContent
         side="right"
-        className="flex h-full w-full flex-col gap-0 overflow-hidden p-0"
+        className="flex h-full w-full flex-col gap-0 overflow-y-auto p-0 md:overflow-hidden"
       >
         <SheetHeader className="border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ function DocumentViewer({
           </div>
         </SheetHeader>
 
-        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-none flex-col md:flex-1 md:flex-row md:overflow-hidden">
           <DocumentPreview
             fileName={fileName}
             fileType={fileType}

@@ -64,7 +64,7 @@ function ExtractedFields({ sections }: ExtractedFieldsProps) {
   }, [displayedJson])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col md:w-1/2 md:flex-none">
+    <div className="flex min-h-[70vh] flex-1 flex-col md:min-h-0 md:w-1/2 md:flex-none">
       <FieldsStatsBar
         aiCount={aiCount}
         aiFilledCount={aiFilledCount}
