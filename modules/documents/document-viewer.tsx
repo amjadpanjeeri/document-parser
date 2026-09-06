@@ -2,6 +2,7 @@
 
 import { CheckCircle2, FileText, Loader2, Save } from "lucide-react"
 import { useCallback, useState } from "react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { toUserMessage } from "@/lib/error-message"
 import type { ExtractedSection } from "@/lib/types"
 import { useDocumentStore } from "@/stores/document-store"
 import { DocumentPreview } from "./document-preview"
@@ -94,16 +96,33 @@ function DocumentViewer({
 
       if (result.success) {
         setSaveStatus("saved")
+        const isUpdate = Boolean(state.documentId)
+        toast.success(isUpdate ? "Document updated" : "Document saved", {
+          description: isUpdate
+            ? "Your edits have been saved to the document."
+            : `${fileName} has been added to your library.`,
+        })
         setTimeout(() => {
           closeViewer()
           setSaveStatus("idle")
         }, 800)
       } else {
-        console.error("Save failed:", result.error)
+        toast.error("Couldn't save the document", {
+          description: toUserMessage(
+            result.error,
+            "Your changes weren't saved. Please try again."
+          ),
+        })
         setSaveStatus("idle")
       }
     } catch (err) {
-      console.error("Save error:", err)
+      const message = err instanceof Error ? err.message : null
+      toast.error("Couldn't save the document", {
+        description: toUserMessage(
+          message,
+          "Something went wrong while saving. Please try again."
+        ),
+      })
       setSaveStatus("idle")
     }
   }, [fileName, closeViewer])

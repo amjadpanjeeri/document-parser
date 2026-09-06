@@ -1,17 +1,13 @@
 "use client"
 
-import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  FileUp,
-} from "lucide-react"
+import { ArrowRight, CheckCircle2, FileText, FileUp } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useDropzone } from "react-dropzone"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { useExtract } from "@/hooks/use-extract"
+import { toUserMessage } from "@/lib/error-message"
 import { cn } from "@/lib/utils"
 import { useDocumentStore } from "@/stores/document-store"
 
@@ -27,7 +23,6 @@ function UploadZone() {
     openViewer,
   } = useDocumentStore()
   const { extract } = useExtract()
-  const [extractError, setExtractError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -54,7 +49,6 @@ function UploadZone() {
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0]
       if (!file) return
-      setExtractError(null)
       setUploading(file)
 
       const startTime = Date.now()
@@ -68,11 +62,18 @@ function UploadZone() {
           documentType: result.documentType ?? undefined,
           confidence: result.confidence ?? undefined,
         })
+        toast.success("Extraction complete", {
+          description: `${file.name} parsed successfully. Review the fields, then save the document to your library.`,
+        })
         openViewer()
       } catch (err) {
-        console.error("[UploadZone] Extraction failed:", err)
-        const message = err instanceof Error ? err.message : "Extraction failed"
-        setExtractError(message)
+        const message = err instanceof Error ? err.message : null
+        toast.error("Couldn't extract this document", {
+          description: toUserMessage(
+            message,
+            "We couldn't read this file. Try another file or check that it isn't corrupted."
+          ),
+        })
         resetUpload()
       }
     },
@@ -142,37 +143,22 @@ function UploadZone() {
         )}
       </div>
 
-      {/* Idle / Error */}
-      {uploadStatus === "idle" &&
-        (extractError ? (
-          <div className="flex flex-col items-center gap-2">
-            {" "}
-            <AlertCircle className="size-5 text-destructive sm:size-6" />
-            <p className="font-medium text-destructive text-sm">
-              Extraction failed
-            </p>
-            <p className="max-w-xs text-center text-muted-foreground text-xs">
-              {extractError}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              Drop another file to try again
-            </p>
-          </div>
-        ) : (
-          <>
-            <p className="mb-1 font-medium text-sm">
-              Drop your first document here
-            </p>
-            <p className="mb-5 text-center text-muted-foreground text-xs">
-              or click to browse · PDF, PNG, JPG up to 10MB
-            </p>
-            <Button size="lg" className="gap-2" tabIndex={-1}>
-              <FileText className="size-4" />
-              Choose File
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Button>
-          </>
-        ))}
+      {/* Idle */}
+      {uploadStatus === "idle" && (
+        <>
+          <p className="mb-1 font-medium text-sm">
+            Drop your first document here
+          </p>
+          <p className="mb-5 text-center text-muted-foreground text-xs">
+            or click to browse · PDF, PNG, JPG up to 10MB
+          </p>
+          <Button size="lg" className="gap-2" tabIndex={-1}>
+            <FileText className="size-4" />
+            Choose File
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Button>
+        </>
+      )}
 
       {/* Dragging */}
       {uploadStatus === "dragging" && (

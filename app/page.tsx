@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 import { CommandPalette } from "@/components/command-palette"
+import { toUserMessage } from "@/lib/error-message"
 import type { StoredDocument } from "@/lib/models/document"
 import type {
   DocStructDocument,
@@ -40,7 +42,13 @@ export default function Page() {
         }))
         setDocuments(mapped)
       } catch (err) {
-        console.error("Failed to load documents:", err)
+        const message = err instanceof Error ? err.message : null
+        toast.error("Couldn't load your documents", {
+          description: toUserMessage(
+            message,
+            "We couldn't fetch your documents from the database. Please try again."
+          ),
+        })
       } finally {
         setDocumentsLoading(false)
       }
@@ -78,7 +86,13 @@ export default function Page() {
         sections,
       })
     } catch (err) {
-      console.error("Failed to open document:", err)
+      const message = err instanceof Error ? err.message : null
+      toast.error("Couldn't open this document", {
+        description: toUserMessage(
+          message,
+          "The document data couldn't be loaded from the database. Please try again."
+        ),
+      })
     }
   }
 
