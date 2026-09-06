@@ -6,7 +6,6 @@ import {
   Trash2,
 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -22,8 +21,6 @@ import { SelectToggle } from "./select-toggle"
 type DocumentCardListProps = {
   document: DocStructDocument
   selected: boolean
-  statusLabel: string
-  statusClassName: string
   onClick?: () => void
   onToggleSelect?: () => void
   onDelete?: () => void
@@ -33,8 +30,6 @@ type DocumentCardListProps = {
 function DocumentCardList({
   document,
   selected,
-  statusLabel,
-  statusClassName,
   onClick,
   onToggleSelect,
   onDelete,
@@ -68,24 +63,24 @@ function DocumentCardList({
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-sm">{document.name}</p>
+          <p
+            className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium text-sm"
+            title={document.name}
+          >
+            {document.name}
+          </p>
           <div className="mt-0.5 flex items-center gap-2 text-muted-foreground text-xs">
-            <span className="capitalize">{document.type}</span>
+            <span
+              className="min-w-0 max-w-32 overflow-hidden text-ellipsis whitespace-nowrap capitalize"
+              title={document.type}
+            >
+              {document.type}
+            </span>
             <span>·</span>
             <span>{formatDocumentDate(document.uploadedAt)}</span>
           </div>
         </div>
       </button>
-
-      {/* Status */}
-      <Badge
-        className={cn(
-          "hidden shrink-0 text-xs font-medium sm:inline-flex",
-          statusClassName
-        )}
-      >
-        {statusLabel}
-      </Badge>
 
       {/* Confidence */}
       {document.confidence !== undefined && (

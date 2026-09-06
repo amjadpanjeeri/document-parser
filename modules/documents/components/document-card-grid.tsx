@@ -16,8 +16,6 @@ import { SelectToggle } from "./select-toggle"
 type DocumentCardGridProps = {
   document: DocStructDocument
   selected: boolean
-  statusLabel: string
-  statusClassName: string
   onClick?: () => void
   onToggleSelect?: () => void
   onDelete?: () => void
@@ -27,8 +25,6 @@ type DocumentCardGridProps = {
 function DocumentCardGrid({
   document,
   selected,
-  statusLabel,
-  statusClassName,
   onClick,
   onToggleSelect,
   onDelete,
@@ -57,19 +53,20 @@ function DocumentCardGrid({
 
         {/* Content */}
         <div className="flex flex-1 flex-col gap-2 p-4">
-          <p className="truncate font-medium text-sm">{document.name}</p>
+          <p
+            className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium text-sm"
+            title={document.name}
+          >
+            {document.name}
+          </p>
 
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge
               variant="secondary"
-              className="text-xs font-medium capitalize"
+              className="min-w-0 text-ellipsis whitespace-nowrap text-xs font-medium capitalize"
+              title={document.type}
             >
               {document.type}
-            </Badge>
-            <Badge
-              className={cn("text-xs font-medium capitalize", statusClassName)}
-            >
-              {statusLabel}
             </Badge>
           </div>
 
