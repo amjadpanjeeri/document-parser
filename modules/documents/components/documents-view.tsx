@@ -4,13 +4,13 @@ import { Loader2 } from "lucide-react"
 import { useState } from "react"
 
 import type { DocStructDocument } from "@/lib/types"
+import { RecentDocuments } from "../../home/components/recent-documents"
+import { UploadHero } from "../../home/components/upload-hero"
 import { DeleteDialog } from "./delete-dialog"
 import { DocumentCard } from "./document-card"
 import { EmptyState } from "./empty-state"
 import { PageHeader } from "./page-header"
-import { RecentDocuments } from "./recent-documents"
 import { SelectionBar } from "./selection-bar"
-import { UploadHero } from "./upload-hero"
 
 type DocumentsViewProps = {
   documents?: DocStructDocument[]

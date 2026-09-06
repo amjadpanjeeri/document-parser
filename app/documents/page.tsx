@@ -1,9 +1,9 @@
 "use client"
 
 import { useDocuments } from "@/hooks/use-documents"
-import { DocumentViewer } from "@/modules/documents/document-viewer"
-import { LibraryView } from "@/modules/documents/library-view"
-import { Navbar } from "@/modules/documents/navbar"
+import { DocumentViewer } from "@/modules/documents/components/document-viewer"
+import { LibraryView } from "@/modules/documents/components/library-view"
+import { Navbar } from "@/modules/documents/components/navbar"
 import { useDocumentStore } from "@/stores/document-store"
 
 export default function DocumentsPage() {

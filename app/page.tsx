@@ -2,9 +2,9 @@
 
 import { CommandPalette } from "@/components/command-palette"
 import { useDocuments } from "@/hooks/use-documents"
-import { DocumentViewer } from "@/modules/documents/document-viewer"
-import { LandingView } from "@/modules/documents/landing-view"
-import { Navbar } from "@/modules/documents/navbar"
+import { DocumentViewer } from "@/modules/documents/components/document-viewer"
+import { Navbar } from "@/modules/documents/components/navbar"
+import { LandingView } from "@/modules/home/components/landing-view"
 import { useDocumentStore } from "@/stores/document-store"
 
 export default function Page() {

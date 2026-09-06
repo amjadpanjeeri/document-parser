@@ -1,6 +1,6 @@
 import { FileUp } from "lucide-react"
 
-import { UploadZone } from "./upload-zone"
+import { UploadZone } from "../../home/components/upload-zone"
 
 function EmptyState() {
   return (

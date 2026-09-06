@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowRight, FileText, Loader2 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import type { DocStructDocument } from "@/lib/types"
 import { RecentDocuments } from "./recent-documents"

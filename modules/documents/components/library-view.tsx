@@ -5,12 +5,12 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import type { DocStructDocument } from "@/lib/types"
+import { getFilteredDocuments } from "../utils/library-utils"
 import { DeleteDialog } from "./delete-dialog"
 import { EmptyState } from "./empty-state"
 import { LibraryRenameDialog } from "./library-rename-dialog"
 import { LibraryResults } from "./library-results"
 import { LibrarySearch } from "./library-search"
-import { getFilteredDocuments } from "./library-utils"
 import { PageHeader } from "./page-header"
 import { SelectionBar } from "./selection-bar"
 
