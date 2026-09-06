@@ -1,7 +1,7 @@
 "use client"
 
 import { Loader2, Search, Sparkles, X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -28,12 +28,18 @@ export function LibraryView({
 }: LibraryViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [query, setQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
   const [aiResultIds, setAiResultIds] = useState<string[] | null>(null)
   const [aiAnswer, setAiAnswer] = useState("")
   const [aiSearching, setAiSearching] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<string[] | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300)
+    return () => clearTimeout(timer)
+  }, [query])
 
   if (documents.length === 0) {
     if (documentsLoading) {
@@ -47,7 +53,11 @@ export function LibraryView({
     return <EmptyState />
   }
 
-  const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
+  const searchTerms = debouncedQuery
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
   const keywordDocuments = searchTerms.length
     ? documents.filter((doc) =>
         searchTerms.every((term) =>
@@ -137,7 +147,7 @@ export function LibraryView({
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          type="search"
+          type="text"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -170,6 +180,7 @@ export function LibraryView({
               size="icon-sm"
               onClick={() => {
                 setQuery("")
+                setDebouncedQuery("")
                 setAiResultIds(null)
                 setAiAnswer("")
               }}
