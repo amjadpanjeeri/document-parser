@@ -182,6 +182,8 @@ function PageHeader({
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            aria-label="grid"
+            aria-pressed={viewMode === "grid"}
           >
             <LayoutGrid className="size-4" />
           </button>
@@ -194,6 +196,8 @@ function PageHeader({
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
+            aria-label="list"
+            aria-pressed={viewMode === "list"}
           >
             <List className="size-4" />
           </button>

@@ -30,13 +30,6 @@ export default function Page() {
         <div className="absolute -top-48 -left-48 size-[600px] rounded-full bg-primary/[0.06] blur-[120px]" />
         <div className="absolute top-1/3 -right-32 size-[500px] rounded-full bg-violet-500/[0.06] blur-[100px]" />
         <div className="absolute -bottom-48 left-1/3 size-[400px] rounded-full bg-emerald-500/[0.06] blur-[100px]" />
-
-        {/* Floating dots */}
-        <div className="absolute top-20 left-[15%] size-1 rounded-full bg-primary/20" />
-        <div className="absolute top-40 right-[20%] size-1.5 rounded-full bg-violet-500/20" />
-        <div className="absolute bottom-32 left-[25%] size-1 rounded-full bg-emerald-500/20" />
-        <div className="absolute top-1/2 left-[8%] size-1.5 rounded-full bg-primary/15" />
-        <div className="absolute bottom-48 right-[12%] size-1 rounded-full bg-violet-500/15" />
       </div>
 
       <CommandPalette />

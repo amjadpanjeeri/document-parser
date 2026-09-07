@@ -29,7 +29,8 @@
     "**/*.tsx",
     "**/*.mts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "vitest-globals.d.ts"
   ],
   "exclude": ["node_modules"]
 }
