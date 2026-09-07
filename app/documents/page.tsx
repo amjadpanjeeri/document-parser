@@ -47,27 +47,43 @@ export default function DocumentsPage() {
     <div className="relative flex min-h-screen flex-col overflow-hidden">
       {/* Background decorations */}
       <div className="pointer-events-none fixed inset-0 -z-10">
-        {/* Grid pattern */}
+        {/* Top-left gradient */}
         <div
-          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
+          className="fixed inset-0"
           style={{
-            backgroundImage:
-              "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
+            background: `
+              radial-gradient(
+                ellipse 80% 60% at 12% 8%,
+                oklch(0.55 0.22 264 / 0.35),
+                transparent 60%
+              ),
+              radial-gradient(
+                ellipse 60% 50% at 8% 12%,
+                oklch(0.7 0.18 282 / 0.3),
+                transparent 55%
+              )
+            `,
           }}
         />
 
-        {/* Gradient orbs */}
-        <div className="absolute -top-48 -left-48 size-[600px] rounded-full bg-primary/[0.06] blur-[120px]" />
-        <div className="absolute top-1/3 -right-32 size-[500px] rounded-full bg-violet-500/[0.06] blur-[100px]" />
-        <div className="absolute -bottom-48 left-1/3 size-[400px] rounded-full bg-emerald-500/[0.06] blur-[100px]" />
-
-        {/* Floating dots */}
-        <div className="absolute top-20 left-[15%] size-1 rounded-full bg-primary/20" />
-        <div className="absolute top-40 right-[20%] size-1.5 rounded-full bg-violet-500/20" />
-        <div className="absolute bottom-32 left-[25%] size-1 rounded-full bg-emerald-500/20" />
-        <div className="absolute top-1/2 left-[8%] size-1.5 rounded-full bg-primary/15" />
-        <div className="absolute bottom-48 right-[12%] size-1 rounded-full bg-violet-500/15" />
+        {/* Bottom-right gradient */}
+        <div
+          className="fixed inset-0"
+          style={{
+            background: `
+              radial-gradient(
+                ellipse 90% 70% at 92% 92%,
+                oklch(0.55 0.24 27.3 / 0.28),
+                transparent 65%
+              ),
+              radial-gradient(
+                ellipse 60% 50% at 96% 96%,
+                oklch(0.65 0.18 264 / 0.22),
+                transparent 55%
+              )
+            `,
+          }}
+        />
       </div>
 
       <Navbar />
