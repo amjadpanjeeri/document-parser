@@ -14,6 +14,10 @@ type ExtractResult = {
   confidence: number | null
   /** SHA-256 of the uploaded file, for duplicate detection. */
   fileHash: string | null
+  /** Storage path of the original file, when storage is configured. */
+  filePath: string | null
+  /** MIME type of the original file. */
+  fileType: string | null
 }
 
 type UseExtractReturn = {
@@ -121,6 +125,8 @@ function useExtract(): UseExtractReturn {
           documentType: result.data.documentType ?? null,
           confidence: result.data.confidence ?? null,
           fileHash,
+          filePath: result.data.filePath ?? null,
+          fileType: result.data.fileType ?? null,
         }
 
         setSections(mappedSections)

@@ -34,6 +34,8 @@ async function saveExtractedDocument(data: {
   summary?: string
   contentHash?: string
   thumbnail?: string
+  filePath?: string
+  fileType?: string
 }): Promise<{
   id: string | null
   success: boolean
@@ -50,6 +52,8 @@ async function saveExtractedDocument(data: {
     summary: data.summary,
     contentHash: data.contentHash,
     thumbnail: data.thumbnail,
+    filePath: data.filePath,
+    fileType: data.fileType,
   })
 
   return { ...result, id: result.id ?? null }

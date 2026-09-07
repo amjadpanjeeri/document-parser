@@ -41,6 +41,10 @@ type StoredDocument = {
   contentHash?: string
   /** Small image thumbnail (data URL) shown on document cards. */
   thumbnail?: string
+  /** Storage path of the original file (e.g. in Supabase Storage). */
+  filePath?: string
+  /** MIME type of the original file (e.g. application/pdf). */
+  fileType?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -57,6 +61,8 @@ type SerializableStoredDocument = {
   folderId: string | null
   contentHash: string | null
   thumbnail: string | null
+  filePath: string | null
+  fileType: string | null
   createdAt: string
   updatedAt: string
 }
@@ -85,6 +91,8 @@ function serializeStoredDocument(
     folderId: doc.folderId ?? null,
     contentHash: doc.contentHash ?? null,
     thumbnail: doc.thumbnail ?? null,
+    filePath: doc.filePath ?? null,
+    fileType: doc.fileType ?? null,
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()

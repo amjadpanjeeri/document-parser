@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { extractDocumentData } from "@/lib/extract"
+import { uploadDocumentFile } from "@/lib/storage"
 
 /**
  * Allowed MIME types for upload validation.
@@ -72,6 +73,10 @@ export async function POST(request: Request) {
       Object.keys(extractedData.fields).length
     )
 
+    // Keep the original file in storage so saved documents can be previewed
+    // later. Best-effort: extraction still succeeds when storage is absent.
+    const { path: filePath } = await uploadDocumentFile(file, file.name)
+
     // Persist only when the user confirms the extracted result in the viewer.
     const documentId: string | null = null
     return NextResponse.json({
@@ -79,6 +84,8 @@ export async function POST(request: Request) {
       data: {
         ...extractedData,
         documentId,
+        filePath,
+        fileType: file.type,
       },
     })
   } catch (error) {

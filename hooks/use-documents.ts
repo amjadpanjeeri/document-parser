@@ -170,6 +170,8 @@ function useDocuments(): UseDocumentsReturn {
         documentType: fullDoc.documentType,
         confidence: fullDoc.confidence,
         sections: mapStoredSections(fullDoc.sections),
+        fileType: fullDoc.fileType ?? undefined,
+        filePath: fullDoc.filePath ?? undefined,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : null

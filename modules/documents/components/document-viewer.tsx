@@ -53,6 +53,8 @@ function DocumentViewer({
     documentId,
     documentType,
     savedFileName,
+    fileType: storedFileType,
+    filePath: storedFilePath,
     closeViewer,
     setSavedFileName,
   } = useDocumentStore()
@@ -72,9 +74,15 @@ function DocumentViewer({
     fileNameOverride ??
     uploadedFile?.name ??
     "document.pdf"
-  const fileType = uploadedFile?.type ?? "application/pdf"
+  const fileType = uploadedFile?.type ?? storedFileType ?? "application/pdf"
   const sections =
     sectionsProp && sectionsProp.length > 0 ? sectionsProp : extractedSections
+
+  // Prefer the in-session blob preview; fall back to the stored file so saved
+  // documents keep their preview through a signed URL.
+  const previewUrl =
+    filePreviewUrl ??
+    (documentId && storedFilePath ? `/api/documents/${documentId}/file` : null)
 
   useEffect(() => {
     setEditableFileName(fileName)
@@ -187,6 +195,8 @@ function DocumentViewer({
             status,
             contentHash: state.fileHash ?? undefined,
             thumbnail: state.thumbnailUrl ?? undefined,
+            filePath: state.filePath ?? undefined,
+            fileType: state.fileType ?? undefined,
             ...mappedData,
           })
         }
@@ -336,7 +346,7 @@ function DocumentViewer({
           <DocumentPreview
             fileName={fileName}
             fileType={fileType}
-            filePreviewUrl={filePreviewUrl}
+            filePreviewUrl={previewUrl}
           />
           <ExtractedFields sections={sections} />
         </div>

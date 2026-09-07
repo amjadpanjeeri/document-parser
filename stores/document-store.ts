@@ -20,6 +20,10 @@ type DocumentStore = {
   fileHash: string | null
   /** Small image thumbnail (data URL) saved with the document for cards. */
   thumbnailUrl: string | null
+  /** Storage path of the original file, saved with the document. */
+  filePath: string | null
+  /** MIME type of the original file (from upload or a saved document). */
+  fileType: string | null
   /** When opened from the documents listing (not after extraction) */
   isSavedDocument: boolean
   /** Filename when opened from listing (no uploadedFile available) */
@@ -38,6 +42,8 @@ type DocumentStore = {
       confidence?: number
       fileHash?: string | null
       thumbnailUrl?: string | null
+      filePath?: string | null
+      fileType?: string | null
     }
   ) => void
   updateExtractedSections: (sections: ExtractedSection[]) => void
@@ -54,6 +60,8 @@ type DocumentStore = {
     documentType: string
     confidence: number
     sections: ExtractedSection[]
+    fileType?: string
+    filePath?: string
   }) => void
 }
 
@@ -71,6 +79,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   documentConfidence: null,
   fileHash: null,
   thumbnailUrl: null,
+  filePath: null,
+  fileType: null,
   isSavedDocument: false,
   savedFileName: null,
 
@@ -81,6 +91,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       statusMessage: "Uploading file...",
       uploadedFile: file,
       filePreviewUrl: url,
+      fileType: file.type,
       extractionTimeMs: null,
     })
   },
@@ -106,6 +117,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       confidence?: number
       fileHash?: string | null
       thumbnailUrl?: string | null
+      filePath?: string | null
+      fileType?: string | null
     }
   ) => {
     set({
@@ -117,6 +130,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       documentConfidence: meta?.confidence ?? null,
       fileHash: meta?.fileHash ?? null,
       thumbnailUrl: meta?.thumbnailUrl ?? null,
+      filePath: meta?.filePath ?? null,
+      fileType: meta?.fileType ?? null,
     })
   },
 
@@ -155,6 +170,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         documentConfidence: null,
         fileHash: null,
         thumbnailUrl: null,
+        filePath: null,
+        fileType: null,
         isSavedDocument: false,
         savedFileName: null,
       }
@@ -170,6 +187,8 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       viewerOpen: true,
       isSavedDocument: true,
       savedFileName: doc.fileName,
+      fileType: doc.fileType ?? null,
+      filePath: doc.filePath ?? null,
     })
   },
 

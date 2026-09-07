@@ -100,6 +100,8 @@ function UploadZone() {
               documentType: existing.documentType,
               confidence: existing.confidence,
               sections: mapStoredSections(existing.sections),
+              fileType: existing.fileType ?? undefined,
+              filePath: existing.filePath ?? undefined,
             })
             toast.info("Already in your library", {
               description: `“${existing.filename}” was uploaded before — opening the saved copy.`,
@@ -127,6 +129,8 @@ function UploadZone() {
           confidence: result.confidence ?? undefined,
           fileHash: result.fileHash ?? undefined,
           thumbnailUrl: thumbnailUrl ?? undefined,
+          filePath: result.filePath ?? undefined,
+          fileType: result.fileType ?? undefined,
         })
         toast.success("Extraction complete", {
           description: `${file.name} parsed successfully. Review the fields, then save the document to your library.`,
