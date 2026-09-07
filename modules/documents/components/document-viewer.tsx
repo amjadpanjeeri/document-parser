@@ -186,6 +186,7 @@ function DocumentViewer({
             confidence: state.documentConfidence || 0,
             status,
             contentHash: state.fileHash ?? undefined,
+            thumbnail: state.thumbnailUrl ?? undefined,
             ...mappedData,
           })
         }

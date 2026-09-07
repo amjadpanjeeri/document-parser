@@ -39,6 +39,8 @@ type StoredDocument = {
   folderId?: string | null
   /** SHA-256 of the uploaded file, used to detect duplicate uploads. */
   contentHash?: string
+  /** Small image thumbnail (data URL) shown on document cards. */
+  thumbnail?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -54,6 +56,7 @@ type SerializableStoredDocument = {
   summary?: string
   folderId: string | null
   contentHash: string | null
+  thumbnail: string | null
   createdAt: string
   updatedAt: string
 }
@@ -81,6 +84,7 @@ function serializeStoredDocument(
     summary: doc.summary ?? undefined,
     folderId: doc.folderId ?? null,
     contentHash: doc.contentHash ?? null,
+    thumbnail: doc.thumbnail ?? null,
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()

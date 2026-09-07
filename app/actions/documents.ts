@@ -33,6 +33,7 @@ async function saveExtractedDocument(data: {
   fields: Record<string, string | null>
   summary?: string
   contentHash?: string
+  thumbnail?: string
 }): Promise<{
   id: string | null
   success: boolean
@@ -48,6 +49,7 @@ async function saveExtractedDocument(data: {
     fields: data.fields,
     summary: data.summary,
     contentHash: data.contentHash,
+    thumbnail: data.thumbnail,
   })
 
   return { ...result, id: result.id ?? null }

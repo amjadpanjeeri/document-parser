@@ -18,6 +18,8 @@ type DocumentStore = {
   documentConfidence: number | null
   /** SHA-256 of the uploaded file — saved with the document to detect duplicates. */
   fileHash: string | null
+  /** Small image thumbnail (data URL) saved with the document for cards. */
+  thumbnailUrl: string | null
   /** When opened from the documents listing (not after extraction) */
   isSavedDocument: boolean
   /** Filename when opened from listing (no uploadedFile available) */
@@ -35,6 +37,7 @@ type DocumentStore = {
       documentType?: string
       confidence?: number
       fileHash?: string | null
+      thumbnailUrl?: string | null
     }
   ) => void
   updateExtractedSections: (sections: ExtractedSection[]) => void
@@ -67,6 +70,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   documentType: null,
   documentConfidence: null,
   fileHash: null,
+  thumbnailUrl: null,
   isSavedDocument: false,
   savedFileName: null,
 
@@ -101,6 +105,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       documentType?: string
       confidence?: number
       fileHash?: string | null
+      thumbnailUrl?: string | null
     }
   ) => {
     set({
@@ -111,6 +116,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       documentType: meta?.documentType ?? null,
       documentConfidence: meta?.confidence ?? null,
       fileHash: meta?.fileHash ?? null,
+      thumbnailUrl: meta?.thumbnailUrl ?? null,
     })
   },
 
@@ -148,6 +154,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         documentType: null,
         documentConfidence: null,
         fileHash: null,
+        thumbnailUrl: null,
         isSavedDocument: false,
         savedFileName: null,
       }

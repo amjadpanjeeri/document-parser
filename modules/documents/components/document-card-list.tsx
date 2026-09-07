@@ -60,9 +60,18 @@ function DocumentCardList({
         onClick={onClick}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
-        {/* Thumbnail */}
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <FileText className="size-5 text-muted-foreground" />
+        {/* Thumbnail — images show the file itself, PDFs keep the icon */}
+        <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+          {document.thumbnailUrl ? (
+            // biome-ignore lint/performance/noImgElement: data URLs can't use next/image
+            <img
+              src={document.thumbnailUrl}
+              alt={document.name}
+              className="size-full rounded-lg object-cover"
+            />
+          ) : (
+            <FileText className="size-5 text-muted-foreground" />
+          )}
         </div>
 
         {/* Info */}

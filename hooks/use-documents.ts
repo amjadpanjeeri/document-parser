@@ -41,6 +41,7 @@ function mapStoredDocument(doc: SerializableStoredDocument): DocStructDocument {
     confidence: doc.confidence,
     searchText,
     folderId: doc.folderId ?? null,
+    thumbnailUrl: doc.thumbnail ?? undefined,
   }
 }
 

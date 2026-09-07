@@ -25,6 +25,7 @@ import { useExtract } from "@/hooks/use-extract"
 import { toUserMessage } from "@/lib/error-message"
 import { cn } from "@/lib/utils"
 import { computeFileHash } from "@/lib/utils/file-hash"
+import { generateImageThumbnail } from "@/lib/utils/image-thumbnail"
 import { useDocumentStore } from "@/stores/document-store"
 
 function UploadZone() {
@@ -113,7 +114,11 @@ function UploadZone() {
       const startTime = Date.now()
       try {
         setStatusMessage("Extracting with AI...")
-        const result = await extract(file, userComments, fileHash)
+        // Generate the card thumbnail while extraction runs in parallel.
+        const [result, thumbnailUrl] = await Promise.all([
+          extract(file, userComments, fileHash),
+          generateImageThumbnail(file).catch(() => null),
+        ])
         const duration = Date.now() - startTime
 
         completeUpload(result.sections, duration, {
@@ -121,6 +126,7 @@ function UploadZone() {
           documentType: result.documentType ?? undefined,
           confidence: result.confidence ?? undefined,
           fileHash: result.fileHash ?? undefined,
+          thumbnailUrl: thumbnailUrl ?? undefined,
         })
         toast.success("Extraction complete", {
           description: `${file.name} parsed successfully. Review the fields, then save the document to your library.`,

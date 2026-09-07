@@ -54,9 +54,18 @@ function DocumentCardGrid({
         onClick={onClick}
         className="flex w-full cursor-pointer flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
       >
-        {/* Thumbnail */}
-        <div className="flex aspect-[4/3] items-center justify-center bg-muted/50">
-          <FileText className="size-10 text-muted-foreground/50" />
+        {/* Thumbnail — images show the file itself, PDFs keep the icon */}
+        <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted/50">
+          {document.thumbnailUrl ? (
+            // biome-ignore lint/performance/noImgElement: data URLs can't use next/image
+            <img
+              src={document.thumbnailUrl}
+              alt={document.name}
+              className="size-full object-cover"
+            />
+          ) : (
+            <FileText className="size-10 text-muted-foreground/50" />
+          )}
         </div>
 
         {/* Content */}
