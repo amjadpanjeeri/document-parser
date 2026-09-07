@@ -28,6 +28,26 @@ import { computeFileHash } from "@/lib/utils/file-hash"
 import { generateImageThumbnail } from "@/lib/utils/image-thumbnail"
 import { useDocumentStore } from "@/stores/document-store"
 
+const DEFAULT_ESTIMATE_MS = 5_000
+const MIN_ESTIMATE_MS = 5_000
+const MAX_ESTIMATE_MS = 45_000
+
+async function getAverageExtractionTimeMs(): Promise<number | null> {
+  try {
+    const { getAverageExtractionTime } = await import("@/app/actions/documents")
+    return await getAverageExtractionTime(50)
+  } catch {
+    return null
+  }
+}
+
+function estimateExtractionDuration(avgMs: number | null): number {
+  if (avgMs == null) return DEFAULT_ESTIMATE_MS
+  // Use the average but clamp to a reasonable range so the UI never
+  // looks broken when actual times are unusually fast or slow.
+  return Math.max(MIN_ESTIMATE_MS, Math.min(MAX_ESTIMATE_MS, avgMs))
+}
+
 function UploadZone() {
   const {
     uploadStatus,
@@ -44,20 +64,30 @@ function UploadZone() {
   )
   const { extract } = useExtract()
   const [elapsed, setElapsed] = useState(0)
+  const [progressPct, setProgressPct] = useState(0)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [pendingFileName, setPendingFileName] = useState("")
   const [comments, setComments] = useState("")
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Live ticking timer during extraction
+  // Live ticking timer during extraction, with a progress estimate.
   useEffect(() => {
     if (uploadStatus === "uploading") {
       setElapsed(0)
       const start = Date.now()
+
+      // Best-effort average extraction time for progress sizing.
+      let estimatedDuration = DEFAULT_ESTIMATE_MS
+      getAverageExtractionTimeMs().then((avgMs) => {
+        estimatedDuration = estimateExtractionDuration(avgMs)
+        setProgressPct(0)
+      })
+
       timerRef.current = setInterval(() => {
-        setElapsed(
-          ((Date.now() - start) / 1000).toFixed(1) as unknown as number
-        )
+        const elapsedMs = Date.now() - start
+        setElapsed((elapsedMs / 1000).toFixed(1) as unknown as number)
+        const pct = Math.min(100, (elapsedMs / estimatedDuration) * 100)
+        setProgressPct(pct)
       }, 100)
     } else if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -121,9 +151,12 @@ function UploadZone() {
           extract(file, userComments, fileHash),
           generateImageThumbnail(file).catch(() => null),
         ])
-        const duration = Date.now() - startTime
 
-        completeUpload(result.sections, duration, {
+        // Real extraction time from the API (server-side measurement).
+        const extractionTimeMs =
+          result.extractionTimeMs ?? Date.now() - startTime
+
+        completeUpload(result.sections, extractionTimeMs, {
           documentId: result.documentId ?? undefined,
           documentType: result.documentType ?? undefined,
           confidence: result.confidence ?? undefined,
@@ -256,14 +289,20 @@ function UploadZone() {
         {uploadStatus === "uploading" && (
           <>
             <p className="mb-1 font-medium text-sm">
-              {statusMessage || "Uploading..."}
+              {statusMessage || "Extracting..."}
             </p>
             <p className="text-muted-foreground text-xs">
               {useDocumentStore.getState().uploadedFile?.name}
             </p>
             <div className="mt-3 flex items-center gap-2">
               <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted sm:w-48">
-                <div className="h-full rounded-full bg-primary animate-[slide_2s_ease-in-out]" />
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{
+                    animationDuration: `${Math.max(2, progressPct / 100)}s`,
+                    width: `${progressPct}%`,
+                  }}
+                />
               </div>
               <span className="font-mono text-muted-foreground text-xs tabular-nums">
                 {elapsed}s

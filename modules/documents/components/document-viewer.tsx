@@ -197,6 +197,7 @@ function DocumentViewer({
             thumbnail: state.thumbnailUrl ?? undefined,
             filePath: state.filePath ?? undefined,
             fileType: state.fileType ?? undefined,
+            extractionTimeMs: state.extractionTimeMs ?? undefined,
             ...mappedData,
           })
         }

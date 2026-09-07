@@ -36,6 +36,7 @@ async function saveExtractedDocument(data: {
   thumbnail?: string
   filePath?: string
   fileType?: string
+  extractionTimeMs?: number
 }): Promise<{
   id: string | null
   success: boolean
@@ -54,6 +55,7 @@ async function saveExtractedDocument(data: {
     thumbnail: data.thumbnail,
     filePath: data.filePath,
     fileType: data.fileType,
+    extractionTimeMs: data.extractionTimeMs ?? undefined,
   })
 
   return { ...result, id: result.id ?? null }
@@ -107,6 +109,18 @@ async function deleteExtractedDocuments(
 }
 
 /**
+ * Get the average extraction time (ms) across recent documents.
+ */
+async function getAverageExtractionTime(
+  limit?: number
+): Promise<number | null> {
+  const { getAverageExtractionTime: getAvg } = await import(
+    "@/lib/models/document"
+  )
+  return getAvg(limit)
+}
+
+/**
  * Move documents into a folder, or back to the library root when folderId is null.
  */
 async function moveExtractedDocuments(
@@ -143,6 +157,7 @@ export {
   deleteExtractedDocument,
   deleteExtractedDocuments,
   findDuplicateDocument,
+  getAverageExtractionTime,
   getExtractedDocument,
   listExtractedDocuments,
   moveExtractedDocuments,

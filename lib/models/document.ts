@@ -45,6 +45,8 @@ type StoredDocument = {
   filePath?: string
   /** MIME type of the original file (e.g. application/pdf). */
   fileType?: string
+  /** How long the AI extraction took, in milliseconds. */
+  extractionTimeMs?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -63,6 +65,7 @@ type SerializableStoredDocument = {
   thumbnail: string | null
   filePath: string | null
   fileType: string | null
+  extractionTimeMs: number | null
   createdAt: string
   updatedAt: string
 }
@@ -93,6 +96,7 @@ function serializeStoredDocument(
     thumbnail: doc.thumbnail ?? null,
     filePath: doc.filePath ?? null,
     fileType: doc.fileType ?? null,
+    extractionTimeMs: doc.extractionTimeMs ?? null,
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()
@@ -234,6 +238,41 @@ async function listDocuments(
   } catch (error) {
     console.error("[DB] List error:", error)
     return []
+  }
+}
+
+/**
+ * Get the average extraction time across all saved documents, in milliseconds.
+ * Returns null when there are no documents or the database is unavailable.
+ */
+async function getAverageExtractionTime(limit = 100): Promise<number | null> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) return null
+    const { db } = connection
+
+    const pipeline = [
+      { $match: { extractionTimeMs: { $exists: true, $type: "number" } } },
+      { $sort: { createdAt: -1 } },
+      { $limit: limit },
+      {
+        $group: {
+          _id: null,
+          average: { $avg: "$extractionTimeMs" },
+        },
+      },
+    ]
+
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .aggregate(pipeline)
+      .toArray()
+
+    if (result.length === 0 || result[0]._id === null) return null
+    return Math.round(result[0].average)
+  } catch (error) {
+    console.error("[DB] Average extraction time error:", error)
+    return null
   }
 }
 
@@ -485,6 +524,7 @@ export {
   deleteDocumentsInFolders,
   deleteManyDocuments,
   findDocumentByContentHash,
+  getAverageExtractionTime,
   getDocument,
   listDocuments,
   moveDocuments,

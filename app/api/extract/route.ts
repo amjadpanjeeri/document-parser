@@ -63,16 +63,9 @@ export async function POST(request: Request) {
 
     console.log("[Extract API] Processing:", file.name, file.type, file.size)
 
+    const startTime = Date.now()
     const extractedData = await extractDocumentData(file, comments)
-
-    console.log(
-      "[Extract API] Done.",
-      "Type:",
-      extractedData.documentType,
-      "Fields:",
-      Object.keys(extractedData.fields).length
-    )
-
+    const extractionTimeMs = Date.now() - startTime
     // Keep the original file in storage so saved documents can be previewed
     // later. Best-effort: extraction still succeeds when storage is absent.
     const { path: filePath } = await uploadDocumentFile(file, file.name)
@@ -86,6 +79,7 @@ export async function POST(request: Request) {
         documentId,
         filePath,
         fileType: file.type,
+        extractionTimeMs,
       },
     })
   } catch (error) {

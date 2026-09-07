@@ -18,6 +18,8 @@ type ExtractResult = {
   filePath: string | null
   /** MIME type of the original file. */
   fileType: string | null
+  /** How long the extraction took, in milliseconds. */
+  extractionTimeMs: number | null
 }
 
 type UseExtractReturn = {
@@ -127,6 +129,7 @@ function useExtract(): UseExtractReturn {
           fileHash,
           filePath: result.data.filePath ?? null,
           fileType: result.data.fileType ?? null,
+          extractionTimeMs: result.data.extractionTimeMs ?? null,
         }
 
         setSections(mappedSections)
