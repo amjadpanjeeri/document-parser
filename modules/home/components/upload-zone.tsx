@@ -20,9 +20,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { mapStoredSections } from "@/hooks/use-documents"
 import { useExtract } from "@/hooks/use-extract"
 import { toUserMessage } from "@/lib/error-message"
 import { cn } from "@/lib/utils"
+import { computeFileHash } from "@/lib/utils/file-hash"
 import { useDocumentStore } from "@/stores/document-store"
 
 function UploadZone() {
@@ -72,16 +74,53 @@ function UploadZone() {
       setFileNameOverride(pendingFileName)
       setUploading(file)
 
+      // Best-effort content hash — identical file bytes always match,
+      // regardless of the filename.
+      let fileHash: string | null = null
+      try {
+        fileHash = await computeFileHash(file)
+      } catch {
+        fileHash = null
+      }
+
+      // Skip extraction entirely when this exact file is already saved.
+      if (fileHash) {
+        setStatusMessage("Checking for duplicates...")
+        try {
+          const { findDuplicateDocument } = await import(
+            "@/app/actions/documents"
+          )
+          const existing = await findDuplicateDocument(fileHash)
+          if (existing) {
+            resetUpload()
+            useDocumentStore.getState().openDocumentFromDb({
+              documentId: existing.id,
+              fileName: existing.filename,
+              documentType: existing.documentType,
+              confidence: existing.confidence,
+              sections: mapStoredSections(existing.sections),
+            })
+            toast.info("Already in your library", {
+              description: `“${existing.filename}” was uploaded before — opening the saved copy.`,
+            })
+            return
+          }
+        } catch {
+          // Duplicate check failed — proceed with extraction anyway.
+        }
+      }
+
       const startTime = Date.now()
       try {
         setStatusMessage("Extracting with AI...")
-        const result = await extract(file, userComments)
+        const result = await extract(file, userComments, fileHash)
         const duration = Date.now() - startTime
 
         completeUpload(result.sections, duration, {
           documentId: result.documentId ?? undefined,
           documentType: result.documentType ?? undefined,
           confidence: result.confidence ?? undefined,
+          fileHash: result.fileHash ?? undefined,
         })
         toast.success("Extraction complete", {
           description: `${file.name} parsed successfully. Review the fields, then save the document to your library.`,

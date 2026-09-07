@@ -3,6 +3,7 @@
 import {
   deleteDocument,
   deleteManyDocuments,
+  findDocumentByContentHash,
   getDocument,
   listDocuments,
   moveDocuments,
@@ -31,7 +32,13 @@ async function saveExtractedDocument(data: {
   }>
   fields: Record<string, string | null>
   summary?: string
-}): Promise<{ id: string | null; success: boolean; error?: string }> {
+  contentHash?: string
+}): Promise<{
+  id: string | null
+  success: boolean
+  duplicate?: boolean
+  error?: string
+}> {
   const result = await saveDocument({
     filename: data.filename,
     documentType: data.documentType,
@@ -40,9 +47,21 @@ async function saveExtractedDocument(data: {
     sections: data.sections,
     fields: data.fields,
     summary: data.summary,
+    contentHash: data.contentHash,
   })
 
   return { ...result, id: result.id ?? null }
+}
+
+/**
+ * Find a saved document whose file content matches the given SHA-256 hash.
+ * Returns null when no duplicate exists (or the DB is unavailable).
+ */
+async function findDuplicateDocument(
+  hash: string
+): Promise<SerializableStoredDocument | null> {
+  if (!hash) return null
+  return findDocumentByContentHash(hash)
 }
 
 /**
@@ -117,6 +136,7 @@ async function updateExtractedDocument(
 export {
   deleteExtractedDocument,
   deleteExtractedDocuments,
+  findDuplicateDocument,
   getExtractedDocument,
   listExtractedDocuments,
   moveExtractedDocuments,

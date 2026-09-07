@@ -37,6 +37,8 @@ type StoredDocument = {
   summary?: string
   /** Parent folder id, or null/absent when the document lives in the root. */
   folderId?: string | null
+  /** SHA-256 of the uploaded file, used to detect duplicate uploads. */
+  contentHash?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -51,6 +53,7 @@ type SerializableStoredDocument = {
   fields: Record<string, string | null>
   summary?: string
   folderId: string | null
+  contentHash: string | null
   createdAt: string
   updatedAt: string
 }
@@ -77,6 +80,7 @@ function serializeStoredDocument(
     fields: doc.fields,
     summary: doc.summary ?? undefined,
     folderId: doc.folderId ?? null,
+    contentHash: doc.contentHash ?? null,
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()
@@ -100,7 +104,12 @@ const COLLECTION_NAME = "documents"
  */
 async function saveDocument(
   data: Omit<StoredDocument, "_id" | "createdAt" | "updatedAt">
-): Promise<{ id?: string; success: boolean; error?: string }> {
+): Promise<{
+  id?: string
+  success: boolean
+  duplicate?: boolean
+  error?: string
+}> {
   try {
     const connection = await connectToDatabase()
     if (!connection) {
@@ -108,6 +117,21 @@ async function saveDocument(
     }
     const { db } = connection
     const now = new Date()
+
+    // Duplicate guard: never create a second record for the same file bytes.
+    if (data.contentHash) {
+      const existing = await db
+        .collection(COLLECTION_NAME)
+        .findOne({ contentHash: data.contentHash })
+      if (existing) {
+        const existingId =
+          existing._id instanceof ObjectId
+            ? existing._id.toHexString()
+            : String(existing._id)
+        console.log("[DB] Duplicate document skipped:", data.filename)
+        return { id: existingId, success: true, duplicate: true }
+      }
+    }
 
     const result = await db.collection(COLLECTION_NAME).insertOne({
       ...data,
@@ -127,6 +151,29 @@ async function saveDocument(
       error instanceof Error ? error.message : "Failed to save document"
     console.error("[DB] Save error:", message)
     return { success: false, error: message }
+  }
+}
+
+/**
+ * Find a saved document by its file content hash, if any.
+ */
+async function findDocumentByContentHash(
+  hash: string
+): Promise<SerializableStoredDocument | null> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) return null
+    const { db } = connection
+
+    const doc = await db
+      .collection(COLLECTION_NAME)
+      .findOne({ contentHash: hash })
+
+    if (!doc) return null
+    return serializeStoredDocument(doc as StoredDocument)
+  } catch (error) {
+    console.error("[DB] Find by content hash error:", error)
+    return null
   }
 }
 
@@ -425,6 +472,7 @@ export {
   deleteDocument,
   deleteDocumentsInFolders,
   deleteManyDocuments,
+  findDocumentByContentHash,
   getDocument,
   listDocuments,
   moveDocuments,

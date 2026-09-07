@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react"
 
 import type { ExtractedSection } from "@/lib/types"
+import { computeFileHash } from "@/lib/utils/file-hash"
 
 type ExtractStatus = "idle" | "extracting" | "done" | "error"
 
@@ -11,6 +12,8 @@ type ExtractResult = {
   documentId: string | null
   documentType: string | null
   confidence: number | null
+  /** SHA-256 of the uploaded file, for duplicate detection. */
+  fileHash: string | null
 }
 
 type UseExtractReturn = {
@@ -21,7 +24,11 @@ type UseExtractReturn = {
   /** Extracted sections ready for display */
   sections: ExtractedSection[]
   /** Upload and extract a file — returns result on success */
-  extract: (file: File, comments?: string) => Promise<ExtractResult>
+  extract: (
+    file: File,
+    comments?: string,
+    precomputedHash?: string | null
+  ) => Promise<ExtractResult>
   /** Reset state back to idle */
   reset: () => void
 }
@@ -36,9 +43,23 @@ function useExtract(): UseExtractReturn {
   const [sections, setSections] = useState<ExtractedSection[]>([])
 
   const extract = useCallback(
-    async (file: File, comments = ""): Promise<ExtractResult> => {
+    async (
+      file: File,
+      comments = "",
+      precomputedHash: string | null = null
+    ): Promise<ExtractResult> => {
       setStatus("extracting")
       setError(null)
+
+      // Best-effort: if the caller didn't hash the file already, do it here.
+      let fileHash = precomputedHash
+      if (!fileHash) {
+        try {
+          fileHash = await computeFileHash(file)
+        } catch {
+          fileHash = null
+        }
+      }
 
       try {
         const formData = new FormData()
@@ -99,6 +120,7 @@ function useExtract(): UseExtractReturn {
           documentId: result.data.documentId ?? null,
           documentType: result.data.documentType ?? null,
           confidence: result.data.confidence ?? null,
+          fileHash,
         }
 
         setSections(mappedSections)

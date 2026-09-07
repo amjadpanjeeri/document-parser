@@ -296,4 +296,4 @@ function useDocuments(): UseDocumentsReturn {
   }
 }
 
-export { useDocuments }
+export { mapStoredSections, useDocuments }

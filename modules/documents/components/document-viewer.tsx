@@ -146,7 +146,12 @@ function DocumentViewer({
         const actions = await import("@/app/actions/documents")
         const nextFileName = editableFileName.trim() || fileName
 
-        let result: { success: boolean; error?: string }
+        let result: {
+          success: boolean
+          id?: string | null
+          duplicate?: boolean
+          error?: string
+        }
         if (state.documentId) {
           if (nextFileName !== fileName) {
             const renameResponse = await fetch(
@@ -180,6 +185,7 @@ function DocumentViewer({
             documentType: state.documentType || "Other",
             confidence: state.documentConfidence || 0,
             status,
+            contentHash: state.fileHash ?? undefined,
             ...mappedData,
           })
         }
@@ -187,20 +193,28 @@ function DocumentViewer({
         if (result.success) {
           setSaveStatus("saved")
           const isUpdate = Boolean(state.documentId)
-          toast.success(
-            status === "needs_review"
-              ? "Document saved for review"
-              : isUpdate
-                ? "Document updated"
-                : "Document saved",
-            {
-              description: isUpdate
-                ? status === "needs_review"
-                  ? "The document was marked as needing review."
-                  : "Your edits have been saved to the document."
-                : `${nextFileName} has been added to your library.`,
-            }
-          )
+
+          if (result.duplicate) {
+            toast.info("Already in your library", {
+              description:
+                "This file was uploaded before, so no new document was created.",
+            })
+          } else {
+            toast.success(
+              status === "needs_review"
+                ? "Document saved for review"
+                : isUpdate
+                  ? "Document updated"
+                  : "Document saved",
+              {
+                description: isUpdate
+                  ? status === "needs_review"
+                    ? "The document was marked as needing review."
+                    : "Your edits have been saved to the document."
+                  : `${nextFileName} has been added to your library.`,
+              }
+            )
+          }
           setTimeout(() => {
             closeViewer()
             setSaveStatus("idle")

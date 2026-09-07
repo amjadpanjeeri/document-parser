@@ -16,6 +16,8 @@ type DocumentStore = {
   documentId: string | null
   documentType: string | null
   documentConfidence: number | null
+  /** SHA-256 of the uploaded file — saved with the document to detect duplicates. */
+  fileHash: string | null
   /** When opened from the documents listing (not after extraction) */
   isSavedDocument: boolean
   /** Filename when opened from listing (no uploadedFile available) */
@@ -28,7 +30,12 @@ type DocumentStore = {
   completeUpload: (
     sections: ExtractedSection[],
     timeMs?: number,
-    meta?: { documentId?: string; documentType?: string; confidence?: number }
+    meta?: {
+      documentId?: string
+      documentType?: string
+      confidence?: number
+      fileHash?: string | null
+    }
   ) => void
   updateExtractedSections: (sections: ExtractedSection[]) => void
   setSavedFileName: (fileName: string) => void
@@ -59,6 +66,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   documentId: null,
   documentType: null,
   documentConfidence: null,
+  fileHash: null,
   isSavedDocument: false,
   savedFileName: null,
 
@@ -88,7 +96,12 @@ const useDocumentStore = create<DocumentStore>((set) => ({
   completeUpload: (
     sections: ExtractedSection[],
     timeMs?: number,
-    meta?: { documentId?: string; documentType?: string; confidence?: number }
+    meta?: {
+      documentId?: string
+      documentType?: string
+      confidence?: number
+      fileHash?: string | null
+    }
   ) => {
     set({
       uploadStatus: "done",
@@ -97,6 +110,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
       documentId: meta?.documentId ?? null,
       documentType: meta?.documentType ?? null,
       documentConfidence: meta?.confidence ?? null,
+      fileHash: meta?.fileHash ?? null,
     })
   },
 
@@ -133,6 +147,7 @@ const useDocumentStore = create<DocumentStore>((set) => ({
         documentId: null,
         documentType: null,
         documentConfidence: null,
+        fileHash: null,
         isSavedDocument: false,
         savedFileName: null,
       }
