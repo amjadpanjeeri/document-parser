@@ -10,6 +10,7 @@ type DocumentCardProps = {
   onToggleSelect?: (id: string) => void
   onDelete?: (id: string) => void
   onRename?: (id: string) => void
+  onMove?: (id: string) => void
 }
 
 function DocumentCard({
@@ -20,6 +21,7 @@ function DocumentCard({
   onToggleSelect,
   onDelete,
   onRename,
+  onMove,
 }: DocumentCardProps) {
   const sharedProps = {
     document,
@@ -30,6 +32,7 @@ function DocumentCard({
       : undefined,
     onDelete: onDelete ? () => onDelete(document.id) : undefined,
     onRename: onRename ? () => onRename(document.id) : undefined,
+    onMove: onMove ? () => onMove(document.id) : undefined,
   }
 
   if (viewMode === "list") {

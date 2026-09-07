@@ -1,11 +1,13 @@
 import {
   ExternalLink,
   FileText,
+  FolderInput,
   MoreHorizontal,
   Pencil,
   Trash2,
 } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -25,6 +27,7 @@ type DocumentCardListProps = {
   onToggleSelect?: () => void
   onDelete?: () => void
   onRename?: () => void
+  onMove?: () => void
 }
 
 function DocumentCardList({
@@ -34,6 +37,7 @@ function DocumentCardList({
   onToggleSelect,
   onDelete,
   onRename,
+  onMove,
 }: DocumentCardListProps) {
   return (
     <div
@@ -82,6 +86,12 @@ function DocumentCardList({
         </div>
       </button>
 
+      {document.status === "needs_review" && (
+        <Badge className="hidden shrink-0 bg-amber-500/10 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 sm:inline-flex">
+          Needs review
+        </Badge>
+      )}
+
       {/* Confidence */}
       {document.confidence !== undefined && (
         <span className="hidden w-12 shrink-0 text-right text-muted-foreground text-xs md:inline">
@@ -100,7 +110,7 @@ function DocumentCardList({
         >
           <ExternalLink className="size-3.5" />
         </Button>
-        {(onDelete || onRename) && (
+        {(onDelete || onRename || onMove) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -117,6 +127,12 @@ function DocumentCardList({
                 <DropdownMenuItem onSelect={onRename}>
                   <Pencil />
                   Edit name
+                </DropdownMenuItem>
+              )}
+              {onMove && (
+                <DropdownMenuItem onSelect={onMove}>
+                  <FolderInput />
+                  Move to folder
                 </DropdownMenuItem>
               )}
               {onDelete && (

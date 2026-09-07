@@ -5,6 +5,7 @@ import {
   deleteManyDocuments,
   getDocument,
   listDocuments,
+  moveDocuments,
   type SerializableStoredDocument,
   saveDocument,
   updateDocument,
@@ -18,6 +19,7 @@ async function saveExtractedDocument(data: {
   filename: string
   documentType: string
   confidence: number
+  status?: "needs_review" | "ready"
   sections: Array<{
     title: string
     fields: Array<{
@@ -34,6 +36,7 @@ async function saveExtractedDocument(data: {
     filename: data.filename,
     documentType: data.documentType,
     confidence: data.confidence,
+    status: data.status ?? "ready",
     sections: data.sections,
     fields: data.fields,
     summary: data.summary,
@@ -79,6 +82,16 @@ async function deleteExtractedDocuments(
 }
 
 /**
+ * Move documents into a folder, or back to the library root when folderId is null.
+ */
+async function moveExtractedDocuments(
+  ids: string[],
+  folderId: string | null
+): Promise<{ success: boolean; error?: string }> {
+  return moveDocuments(ids, folderId)
+}
+
+/**
  * Update a saved document's fields (e.g. after user edits).
  */
 async function updateExtractedDocument(
@@ -95,6 +108,7 @@ async function updateExtractedDocument(
     }>
     fields: Record<string, string | null>
     confidence: number
+    status?: "needs_review" | "ready"
   }>
 ): Promise<{ success: boolean; error?: string }> {
   return updateDocument(id, data)
@@ -105,6 +119,7 @@ export {
   deleteExtractedDocuments,
   getExtractedDocument,
   listExtractedDocuments,
+  moveExtractedDocuments,
   saveExtractedDocument,
   updateExtractedDocument,
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCheck, Trash2, X } from "lucide-react"
+import { CheckCheck, FolderInput, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,8 @@ type SelectionBarProps = {
   totalCount: number
   onToggleSelectAll: () => void
   onClear: () => void
+  /** When undefined (no folders exist yet), the Move button is hidden. */
+  onMove?: () => void
   onDelete: () => void
   className?: string
 }
@@ -19,6 +21,7 @@ function SelectionBar({
   totalCount,
   onToggleSelectAll,
   onClear,
+  onMove,
   onDelete,
   className,
 }: SelectionBarProps) {
@@ -49,6 +52,18 @@ function SelectionBar({
         <X className="size-3.5" />
         Clear
       </Button>
+
+      {onMove && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={onMove}
+        >
+          <FolderInput className="size-3.5" />
+          Move to folder
+        </Button>
+      )}
 
       <Button
         variant="destructive"

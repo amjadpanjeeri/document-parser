@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb"
 
 import { connectToDatabase } from "@/lib/db"
+import { getFolder } from "./folder"
 
 /**
  * A single extracted field from a document.
@@ -30,9 +31,12 @@ type StoredDocument = {
   filename: string
   documentType: string
   confidence: number
+  status?: "needs_review" | "ready"
   sections: StoredSection[]
   fields: Record<string, string | null>
   summary?: string
+  /** Parent folder id, or null/absent when the document lives in the root. */
+  folderId?: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -42,9 +46,11 @@ type SerializableStoredDocument = {
   filename: string
   documentType: string
   confidence: number
+  status: "needs_review" | "ready"
   sections: StoredSection[]
   fields: Record<string, string | null>
   summary?: string
+  folderId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -66,9 +72,11 @@ function serializeStoredDocument(
     filename: doc.filename,
     documentType: doc.documentType,
     confidence: doc.confidence,
+    status: doc.status ?? (doc.confidence >= 0.8 ? "ready" : "needs_review"),
     sections: doc.sections,
     fields: doc.fields,
     summary: doc.summary ?? undefined,
+    folderId: doc.folderId ?? null,
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()
@@ -293,12 +301,134 @@ async function renameDocument(
   }
 }
 
+/**
+ * Move documents into a folder (or back to the library root when null).
+ */
+async function moveDocuments(
+  ids: string[],
+  folderId: string | null
+): Promise<{ success: boolean; error?: string }> {
+  if (ids.length === 0) {
+    return { success: false, error: "No documents selected" }
+  }
+
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
+    if (folderId) {
+      const folder = await getFolder(folderId)
+      if (!folder) {
+        return { success: false, error: "Destination folder not found" }
+      }
+    }
+
+    const objectIds = ids.map((id) => new ObjectId(id))
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .updateMany(
+        { _id: { $in: objectIds } },
+        { $set: { folderId: folderId ?? null, updatedAt: new Date() } }
+      )
+
+    console.log("[DB] Documents moved:", result.modifiedCount, "->", folderId)
+    return { success: true }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to move documents"
+    console.error("[DB] Move documents error:", message)
+    return { success: false, error: message }
+  }
+}
+
+/**
+ * Count documents currently assigned to any of the given folders.
+ */
+async function countDocumentsInFolders(folderIds: string[]): Promise<number> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) return 0
+    const { db } = connection
+
+    return await db.collection(COLLECTION_NAME).countDocuments({
+      folderId: { $in: folderIds },
+    })
+  } catch (error) {
+    console.error("[DB] Count documents in folders error:", error)
+    return 0
+  }
+}
+
+/**
+ * Move every document inside the given folders back to the library root.
+ */
+async function moveDocumentsOutOfFolders(
+  folderIds: string[]
+): Promise<{ modifiedCount: number; success: boolean; error?: string }> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { modifiedCount: 0, success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .updateMany(
+        { folderId: { $in: folderIds } },
+        { $set: { folderId: null, updatedAt: new Date() } }
+      )
+
+    console.log("[DB] Documents moved to root:", result.modifiedCount)
+    return { success: true, modifiedCount: result.modifiedCount }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to move documents"
+    console.error("[DB] Move documents to root error:", message)
+    return { modifiedCount: 0, success: false, error: message }
+  }
+}
+
+/**
+ * Permanently delete every document inside the given folders.
+ */
+async function deleteDocumentsInFolders(
+  folderIds: string[]
+): Promise<{ deletedCount: number; success: boolean; error?: string }> {
+  try {
+    const connection = await connectToDatabase()
+    if (!connection) {
+      return { deletedCount: 0, success: false, error: "Database unavailable" }
+    }
+    const { db } = connection
+
+    const result = await db.collection(COLLECTION_NAME).deleteMany({
+      folderId: { $in: folderIds },
+    })
+
+    console.log("[DB] Documents deleted by folder:", result.deletedCount)
+    return { success: true, deletedCount: result.deletedCount }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to delete documents"
+    console.error("[DB] Delete documents by folder error:", message)
+    return { deletedCount: 0, success: false, error: message }
+  }
+}
+
 export type { StoredDocument, StoredField, StoredSection }
 export {
+  countDocumentsInFolders,
   deleteDocument,
+  deleteDocumentsInFolders,
   deleteManyDocuments,
   getDocument,
   listDocuments,
+  moveDocuments,
+  moveDocumentsOutOfFolders,
   renameDocument,
   saveDocument,
   updateDocument,

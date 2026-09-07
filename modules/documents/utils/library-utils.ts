@@ -1,10 +1,17 @@
 import type { DocStructDocument } from "@/lib/types"
 
-function matchesDocumentType(documentType: string, selectedType: string) {
-  if (selectedType === "all") return true
+function matchesDocumentFilter(
+  document: DocStructDocument,
+  selectedFilter: string
+) {
+  if (selectedFilter === "all") return true
 
-  const normalizedDocumentType = documentType.trim().toLowerCase()
-  const normalizedSelectedType = selectedType.trim().toLowerCase()
+  if (selectedFilter === "needs_review" || selectedFilter === "ready") {
+    return document.status === selectedFilter
+  }
+
+  const normalizedDocumentType = document.type.trim().toLowerCase()
+  const normalizedSelectedType = selectedFilter.trim().toLowerCase()
 
   return (
     normalizedDocumentType === normalizedSelectedType ||
@@ -33,7 +40,7 @@ function getFilteredDocuments(
     : keywordDocuments
 
   return searchedDocuments
-    .filter((document) => matchesDocumentType(document.type, filter))
+    .filter((document) => matchesDocumentFilter(document, filter))
     .toSorted((first, second) => {
       if (sort === "name-asc") return first.name.localeCompare(second.name)
       if (sort === "name-desc") return second.name.localeCompare(first.name)
@@ -47,4 +54,4 @@ function getFilteredDocuments(
     })
 }
 
-export { getFilteredDocuments, matchesDocumentType }
+export { getFilteredDocuments, matchesDocumentFilter }

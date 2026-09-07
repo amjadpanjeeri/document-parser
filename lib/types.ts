@@ -18,6 +18,17 @@ export interface DocStructDocument {
   confidence?: number
   thumbnailUrl?: string
   searchText?: string
+  /** Parent folder id, or null when the document lives in the library root. */
+  folderId?: string | null
+}
+
+export type Folder = {
+  id: string
+  name: string
+  /** Parent folder id, or null for folders at the library root. */
+  parentId: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export type ExtractedField = {

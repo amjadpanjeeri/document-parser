@@ -36,12 +36,11 @@ function mapStoredDocument(doc: SerializableStoredDocument): DocStructDocument {
     id: doc.id,
     name: doc.filename,
     type: doc.documentType as DocStructDocument["type"],
-    status: (doc.confidence >= 0.8
-      ? "ready"
-      : "needs_review") as DocumentStatus,
+    status: doc.status as DocumentStatus,
     uploadedAt: doc.createdAt,
     confidence: doc.confidence,
     searchText,
+    folderId: doc.folderId ?? null,
   }
 }
 
@@ -75,6 +74,8 @@ type UseDocumentsReturn = {
   /** Delete documents by ID — resolves true when all were deleted. */
   deleteDocuments: (ids: string[]) => Promise<boolean>
   renameDocument: (id: string, filename: string) => Promise<boolean>
+  /** Move documents into a folder — resolves true on success. */
+  moveDocuments: (ids: string[], folderId: string | null) => Promise<boolean>
 }
 
 /**
@@ -241,6 +242,46 @@ function useDocuments(): UseDocumentsReturn {
     [loadDocuments]
   )
 
+  const moveDocuments = useCallback(
+    async (ids: string[], folderId: string | null): Promise<boolean> => {
+      if (ids.length === 0) return false
+      try {
+        const { moveExtractedDocuments } = await import(
+          "@/app/actions/documents"
+        )
+        const result = await moveExtractedDocuments(ids, folderId)
+        if (!result.success) {
+          toast.error("Couldn't move the document", {
+            description: toUserMessage(
+              result.error,
+              "The document wasn't moved. Please try again."
+            ),
+          })
+          return false
+        }
+
+        toast.success(ids.length > 1 ? "Documents moved" : "Document moved", {
+          description:
+            ids.length > 1
+              ? `${ids.length} documents moved.`
+              : "The document was moved.",
+        })
+        await loadDocuments()
+        return true
+      } catch (err) {
+        const message = err instanceof Error ? err.message : null
+        toast.error("Couldn't move the document", {
+          description: toUserMessage(
+            message,
+            "Something went wrong while moving. Please try again."
+          ),
+        })
+        return false
+      }
+    },
+    [loadDocuments]
+  )
+
   return {
     documents,
     documentsLoading,
@@ -251,6 +292,7 @@ function useDocuments(): UseDocumentsReturn {
     openDocument,
     deleteDocuments,
     renameDocument,
+    moveDocuments,
   }
 }
 

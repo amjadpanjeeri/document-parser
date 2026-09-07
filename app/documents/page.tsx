@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 
 import { useDocuments } from "@/hooks/use-documents"
+import { useFolders } from "@/hooks/use-folders"
 import { DocumentViewer } from "@/modules/documents/components/document-viewer"
 import { LibraryView } from "@/modules/documents/components/library-view"
 import { Navbar } from "@/modules/documents/components/navbar"
@@ -16,7 +17,18 @@ export default function DocumentsPage() {
     openDocument,
     deleteDocuments,
     renameDocument,
+    moveDocuments,
+    loadDocuments,
   } = useDocuments()
+  const { folders, foldersLoading, createFolder, renameFolder, deleteFolder } =
+    useFolders()
+
+  const handleDeleteFolder = async (id: string, deleteContents: boolean) => {
+    const deleted = await deleteFolder(id, deleteContents)
+    // Folder deletion can move or remove documents, so refresh the library.
+    if (deleted) await loadDocuments()
+    return deleted
+  }
 
   useEffect(() => {
     const documentId = new URLSearchParams(window.location.search).get(
@@ -64,9 +76,15 @@ export default function DocumentsPage() {
           <LibraryView
             documents={documents}
             documentsLoading={documentsLoading}
+            folders={folders}
+            foldersLoading={foldersLoading}
             onOpenDocument={openDocument}
             onDeleteDocuments={deleteDocuments}
             onRenameDocument={renameDocument}
+            onMoveDocuments={moveDocuments}
+            onCreateFolder={createFolder}
+            onRenameFolder={renameFolder}
+            onDeleteFolder={handleDeleteFolder}
           />
           <DocumentViewer
             open={viewerOpen}

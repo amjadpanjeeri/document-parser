@@ -3,6 +3,7 @@
 import {
   Check,
   CheckCircle2,
+  ClipboardCheck,
   FileText,
   Loader2,
   Pencil,
@@ -117,99 +118,115 @@ function DocumentViewer({
     }
   }, [editableFileName, fileName, setSavedFileName])
 
-  const handleSave = useCallback(async () => {
-    setSaveStatus("saving")
-    try {
-      // Read directly from store to get the latest edited values
-      const currentSections = useDocumentStore.getState().extractedSections
+  const handleSave = useCallback(
+    async (status: "ready" | "needs_review") => {
+      setSaveStatus("saving")
+      try {
+        // Read directly from store to get the latest edited values
+        const currentSections = useDocumentStore.getState().extractedSections
 
-      const mappedData = {
-        sections: currentSections.map((s) => ({
-          title: s.title,
-          fields: s.fields.map((f) => ({
-            key: f.key,
-            label: f.label,
-            value: f.value,
-            confidence: f.confidence / 100,
+        const mappedData = {
+          sections: currentSections.map((s) => ({
+            title: s.title,
+            fields: s.fields.map((f) => ({
+              key: f.key,
+              label: f.label,
+              value: f.value,
+              confidence: f.confidence / 100,
+            })),
           })),
-        })),
-        fields: Object.fromEntries(
-          currentSections.flatMap((s) => s.fields.map((f) => [f.key, f.value]))
-        ),
-      }
-
-      const state = useDocumentStore.getState()
-      const actions = await import("@/app/actions/documents")
-      const nextFileName = editableFileName.trim() || fileName
-
-      let result: { success: boolean; error?: string }
-      if (state.documentId) {
-        if (nextFileName !== fileName) {
-          const renameResponse = await fetch(
-            `/api/documents/${state.documentId}`,
-            {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ filename: nextFileName }),
-            }
-          )
-          const renameResult = (await renameResponse.json()) as {
-            success?: boolean
-            error?: string
-          }
-          if (!renameResponse.ok || !renameResult.success) {
-            throw new Error(renameResult.error || "Filename update failed")
-          }
-          setSavedFileName(nextFileName)
+          fields: Object.fromEntries(
+            currentSections.flatMap((s) =>
+              s.fields.map((f) => [f.key, f.value])
+            )
+          ),
         }
 
-        // Update existing document
-        result = await actions.updateExtractedDocument(state.documentId, {
-          ...mappedData,
-          confidence: state.documentConfidence || 0,
-        })
-      } else {
-        // Save new document
-        result = await actions.saveExtractedDocument({
-          filename: nextFileName,
-          documentType: state.documentType || "Other",
-          confidence: state.documentConfidence || 0,
-          ...mappedData,
-        })
-      }
+        const state = useDocumentStore.getState()
+        const actions = await import("@/app/actions/documents")
+        const nextFileName = editableFileName.trim() || fileName
 
-      if (result.success) {
-        setSaveStatus("saved")
-        const isUpdate = Boolean(state.documentId)
-        toast.success(isUpdate ? "Document updated" : "Document saved", {
-          description: isUpdate
-            ? "Your edits have been saved to the document."
-            : `${nextFileName} has been added to your library.`,
-        })
-        setTimeout(() => {
-          closeViewer()
+        let result: { success: boolean; error?: string }
+        if (state.documentId) {
+          if (nextFileName !== fileName) {
+            const renameResponse = await fetch(
+              `/api/documents/${state.documentId}`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filename: nextFileName }),
+              }
+            )
+            const renameResult = (await renameResponse.json()) as {
+              success?: boolean
+              error?: string
+            }
+            if (!renameResponse.ok || !renameResult.success) {
+              throw new Error(renameResult.error || "Filename update failed")
+            }
+            setSavedFileName(nextFileName)
+          }
+
+          // Update existing document
+          result = await actions.updateExtractedDocument(state.documentId, {
+            ...mappedData,
+            confidence: state.documentConfidence || 0,
+            status,
+          })
+        } else {
+          // Save new document
+          result = await actions.saveExtractedDocument({
+            filename: nextFileName,
+            documentType: state.documentType || "Other",
+            confidence: state.documentConfidence || 0,
+            status,
+            ...mappedData,
+          })
+        }
+
+        if (result.success) {
+          setSaveStatus("saved")
+          const isUpdate = Boolean(state.documentId)
+          toast.success(
+            status === "needs_review"
+              ? "Document saved for review"
+              : isUpdate
+                ? "Document updated"
+                : "Document saved",
+            {
+              description: isUpdate
+                ? status === "needs_review"
+                  ? "The document was marked as needing review."
+                  : "Your edits have been saved to the document."
+                : `${nextFileName} has been added to your library.`,
+            }
+          )
+          setTimeout(() => {
+            closeViewer()
+            setSaveStatus("idle")
+          }, 800)
+        } else {
+          toast.error("Couldn't save the document", {
+            description: toUserMessage(
+              result.error,
+              "Your changes weren't saved. Please try again."
+            ),
+          })
           setSaveStatus("idle")
-        }, 800)
-      } else {
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : null
         toast.error("Couldn't save the document", {
           description: toUserMessage(
-            result.error,
-            "Your changes weren't saved. Please try again."
+            message,
+            "Something went wrong while saving. Please try again."
           ),
         })
         setSaveStatus("idle")
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : null
-      toast.error("Couldn't save the document", {
-        description: toUserMessage(
-          message,
-          "Something went wrong while saving. Please try again."
-        ),
-      })
-      setSaveStatus("idle")
-    }
-  }, [editableFileName, closeViewer, fileName, setSavedFileName])
+    },
+    [editableFileName, closeViewer, fileName, setSavedFileName]
+  )
 
   return (
     <Sheet
@@ -315,7 +332,7 @@ function DocumentViewer({
           </Button>
           <Button
             className="gap-2"
-            onClick={handleSave}
+            onClick={() => handleSave("ready")}
             disabled={saveStatus !== "idle"}
           >
             {saveStatus === "saving" ? (
@@ -334,6 +351,15 @@ function DocumentViewer({
                 Save Document
               </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => handleSave("needs_review")}
+            disabled={saveStatus !== "idle"}
+          >
+            <ClipboardCheck className="size-3.5" />
+            Save for review
           </Button>
         </SheetFooter>
       </SheetContent>

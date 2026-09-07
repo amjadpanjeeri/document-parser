@@ -1,4 +1,10 @@
-import { FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import {
+  FileText,
+  FolderInput,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,6 +26,7 @@ type DocumentCardGridProps = {
   onToggleSelect?: () => void
   onDelete?: () => void
   onRename?: () => void
+  onMove?: () => void
 }
 
 function DocumentCardGrid({
@@ -29,6 +36,7 @@ function DocumentCardGrid({
   onToggleSelect,
   onDelete,
   onRename,
+  onMove,
 }: DocumentCardGridProps) {
   const showActions = "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 
@@ -68,6 +76,11 @@ function DocumentCardGrid({
             >
               {document.type}
             </Badge>
+            {document.status === "needs_review" && (
+              <Badge className="max-w-28 truncate bg-amber-500/10 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                Needs review
+              </Badge>
+            )}
           </div>
 
           <div className="mt-auto flex items-center justify-between text-muted-foreground text-xs">
@@ -91,7 +104,7 @@ function DocumentCardGrid({
       )}
 
       {/* More actions */}
-      {(onDelete || onRename) && (
+      {(onDelete || onRename || onMove) && (
         <div
           className={cn(
             "absolute top-2 right-2 rounded-lg bg-background/80 p-0.5 shadow-sm backdrop-blur-sm transition-opacity",
@@ -114,6 +127,12 @@ function DocumentCardGrid({
                 <DropdownMenuItem onSelect={onRename}>
                   <Pencil />
                   Edit name
+                </DropdownMenuItem>
+              )}
+              {onMove && (
+                <DropdownMenuItem onSelect={onMove}>
+                  <FolderInput />
+                  Move to folder
                 </DropdownMenuItem>
               )}
               {onDelete && (
